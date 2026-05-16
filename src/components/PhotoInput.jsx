@@ -2,11 +2,12 @@ import { useRef } from 'react'
 import { compressImage } from '../utils/image.js'
 
 /**
- * Input de foto opcional com captura direta da câmera traseira no mobile.
- * Recebe e devolve um data URL (string base64) — ou null para limpar.
+ * Input de foto opcional. Permite escolher entre câmera traseira (capture=environment)
+ * ou galeria (file picker padrão). Devolve um data URL ou null.
  */
 export function PhotoInput({ value, onChange, disabled }) {
-  const inputRef = useRef(null)
+  const cameraRef = useRef(null)
+  const galleryRef = useRef(null)
 
   async function handleFile(e) {
     const file = e.target.files?.[0]
@@ -19,7 +20,7 @@ export function PhotoInput({ value, onChange, disabled }) {
       alert('Não consegui processar essa imagem. Tente outra.')
     } finally {
       // Permite re-selecionar o mesmo arquivo
-      if (inputRef.current) inputRef.current.value = ''
+      if (e.target) e.target.value = ''
     }
   }
 
@@ -44,21 +45,40 @@ export function PhotoInput({ value, onChange, disabled }) {
           </button>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="btn-secondary"
-          disabled={disabled}
-        >
-          Tirar foto / Escolher imagem
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => cameraRef.current?.click()}
+            className="btn-secondary"
+            disabled={disabled}
+          >
+            📷 Câmera
+          </button>
+          <button
+            type="button"
+            onClick={() => galleryRef.current?.click()}
+            className="btn-secondary"
+            disabled={disabled}
+          >
+            🖼️ Galeria
+          </button>
+        </div>
       )}
 
+      {/* Câmera traseira direto */}
       <input
-        ref={inputRef}
+        ref={cameraRef}
         type="file"
         accept="image/*"
         capture="environment"
+        onChange={handleFile}
+        className="hidden"
+      />
+      {/* Galeria / file picker padrão */}
+      <input
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
         onChange={handleFile}
         className="hidden"
       />
