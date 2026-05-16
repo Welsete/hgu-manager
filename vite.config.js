@@ -37,7 +37,13 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
-        cleanupOutdatedCaches: true
+        cleanupOutdatedCaches: true,
+        // skipWaiting + clientsClaim = o novo service worker assume IMEDIATAMENTE
+        // quando o usuário recarregar, sem precisar fechar todas as abas / limpar cache.
+        skipWaiting: true,
+        clientsClaim: true,
+        // SPA: qualquer rota desconhecida cai no index.html
+        navigateFallback: '/index.html'
       }
     })
   ]
