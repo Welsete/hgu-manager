@@ -1,0 +1,181 @@
+import { useState } from 'react'
+import { deleteHgu } from '../utils/storage.js'
+import { getAvailability, statusColor, statusLabel } from '../utils/availability.js'
+
+export function DetalheScreen({ hgu, onBack, onDeleted }) {
+  const [showPasswords, setShowPasswords] = useState(false)
+
+  if (!hgu) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-slate-400 mb-4">HGU não encontrado.</p>
+          <button onClick={onBack} className="btn-secondary">Voltar ao mapa</button>
+        </div>
+      </div>
+    )
+  }
+
+  const { status, daysSinceUse, daysUntilAvailable } = getAvailability(hgu)
+  const color = statusColor(status)
+
+  function handleDelete() {
+    const ok = window.confirm(`Apagar o HGU "${hgu.ssid}"?\n\nEsta ação não pode ser desfeita.`)
+    if (!ok) return
+    deleteHgu(hgu.id)
+    onDeleted?.()
+  }
+
+  function handleDownloadPhoto() {
+    if (!hgu.photo) return
+    // Nome amigável pra usar no Zeus — só letras/números/underscore
+    const safe = (s) => (s || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40)
+    const filename = `HGU_${safe(hgu.ssid)}_${safe(hgu.slid)}.jpg`
+    const a = document.createElement('a')
+    a.href = hgu.photo
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950">
+      <header className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800">
+        <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-2">
+          <button onClick={onBack} className="btn-ghost" type="button">← Voltar</button>
+          <h1 className="text-lg font-semibold flex-1 text-center pr-16 truncate">
+            {hgu.ssid}
+          </h1>
+        </div>
+      </header>
+
+      <main className="max-w-xl mx-auto px-4 py-6 space-y-5 pb-24">
+        {/* Card de status */}
+        <div
+          className="rounded-xl border p-4"
+          style={{ borderColor: color, backgroundColor: color + '1a' }}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-3xl leading-none" style={{ color }}>●</span>
+            <div>
+              <div className="font-bold text-lg" style={{ color }}>
+                {statusLabel(status)}
+              </div>
+              <div className="text-sm text-slate-300">
+                {daysSinceUse == null
+                  ? 'Nunca usado para Magic Tool'
+                  : status === 'available'
+                  ? `Último uso há ${Math.floor(daysSinceUse)} dia${Math.floor(daysSinceUse) !== 1 ? 's' : ''}`
+                  : `Libera em ${Math.ceil(daysUntilAvailable)} dia${Math.ceil(daysUntilAvailable) !== 1 ? 's' : ''}`}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Card de último uso (sempre visível) */}
+        <div className="rounded-lg bg-slate-900 border border-slate-800 p-4">
+          <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">
+            Último uso do Magic Tool
+          </div>
+          {hgu.lastMagicToolUse ? (
+            <>
+              <div className="text-slate-100 font-semibold text-lg">
+                {new Date(hgu.lastMagicToolUse).toLocaleString('pt-BR', {
+                  day: '2-digit', month: '2-digit', year: 'numeric',
+                  hour: '2-digit', minute: '2-digit'
+                })}
+              </div>
+              <div className="text-slate-400 text-sm mt-0.5">
+                há {Math.floor(daysSinceUse)} dia{Math.floor(daysSinceUse) !== 1 ? 's' : ''}
+              </div>
+            </>
+          ) : (
+            <div className="text-slate-100 font-semibold text-lg">
+              Nunca usado
+            </div>
+          )}
+        </div>
+
+        {/* Foto + botão de download */}
+        {hgu.photo && (
+          <div className="space-y-2">
+            <img
+              src={hgu.photo}
+              alt={`Foto de ${hgu.ssid}`}
+              className="w-full max-h-72 object-cover rounded-lg border border-slate-700"
+            />
+            <button
+              type="button"
+              onClick={handleDownloadPhoto}
+              className="btn-secondary"
+            >
+              📥 Baixar foto (para o Zeus)
+            </button>
+          </div>
+        )}
+
+        {/* Dados */}
+        <div className="space-y-4">
+          <Field label="SSID" value={hgu.ssid} />
+          <Field label="Senha WiFi" value={hgu.wifiPassword} secret revealed={showPasswords} />
+          <Field label="Senha do modem" value={hgu.modemPassword} secret revealed={showPasswords} />
+          <Field label="SLID" value={hgu.slid} />
+          {hgu.note && <Field label="Anotação" value={hgu.note} />}
+          {hgu.location ? (
+            <Field
+              label="GPS"
+              value={`${hgu.location.lat.toFixed(6)}, ${hgu.location.lng.toFixed(6)}`}
+              hint={hgu.location.accuracy ? `Precisão ±${Math.round(hgu.location.accuracy)} m` : null}
+            />
+          ) : (
+            <Field label="GPS" value="Não cadastrado" hint="Não vai aparecer no mapa." />
+          )}
+          <Field
+            label="Cadastrado em"
+            value={new Date(hgu.createdAt).toLocaleString('pt-BR')}
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowPasswords((s) => !s)}
+          className="btn-secondary"
+        >
+          {showPasswords ? '🔒 Ocultar senhas' : '👁 Mostrar senhas'}
+        </button>
+
+        {/* Ações */}
+        <div className="pt-4 border-t border-slate-800 space-y-3">
+          <button
+            type="button"
+            disabled
+            className="btn-primary opacity-50 cursor-not-allowed"
+            title="Disponível no Módulo 3"
+          >
+            Usar Magic Tool agora (em breve)
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="w-full rounded-lg bg-red-950 hover:bg-red-900 active:bg-red-950 text-red-200 font-semibold py-3 px-4 transition border border-red-800"
+          >
+            Apagar HGU
+          </button>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+function Field({ label, value, secret, revealed, hint }) {
+  const display = secret && !revealed ? '••••••••••' : value
+  return (
+    <div>
+      <div className="text-slate-400 text-xs uppercase tracking-wide">{label}</div>
+      <div className="text-slate-100 font-mono break-all mt-0.5">{display}</div>
+      {hint && <div className="text-slate-500 text-xs mt-0.5">{hint}</div>}
+    </div>
+  )
+}
