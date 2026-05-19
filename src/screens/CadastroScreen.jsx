@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { TextField } from '../components/TextField.jsx'
 import { PhotoInput } from '../components/PhotoInput.jsx'
 import { GpsField } from '../components/GpsField.jsx'
+import { AddressField } from '../components/AddressField.jsx'
 import { createHgu } from '../utils/storage.js'
 
 const EMPTY_FORM = {
@@ -10,6 +11,7 @@ const EMPTY_FORM = {
   modemPassword: '',
   slid: '',
   note: '',
+  address: '',
   photo: null,
   location: null
 }
@@ -128,6 +130,12 @@ export function CadastroScreen({ onBack, onSaved }) {
           value={form.location}
           onChange={(v) => update('location', v)}
           disabled={submitting}
+        />
+
+        <AddressField
+          value={form.address}
+          onChange={(v) => update('address', v)}
+          location={form.location}
         />
 
         <PhotoInput

@@ -3,22 +3,38 @@ import { MapView } from '../components/MapView.jsx'
 import { useGeolocation } from '../hooks/useGeolocation.js'
 import { listHgus } from '../utils/storage.js'
 
-export function MapaScreen({ onNewHgu, onSelectHgu }) {
+export function MapaScreen({ onNewHgu, onSelectHgu, onOpenList, userPosition, onUserPositionChange }) {
   const [hgus, setHgus] = useState([])
   const { coords, requestLocation, error: gpsError, loading: gpsLoading } = useGeolocation()
+  const [recenterTrigger, setRecenterTrigger] = useState(0)
 
   useEffect(() => {
     setHgus(listHgus())
     // Tenta pegar GPS automaticamente ao abrir o mapa
-    requestLocation().catch(() => {
-      // erro já tratado pelo hook
-    })
+    requestLocation().catch(() => {})
   }, [requestLocation])
+
+  // Propaga a posição pra outras telas (Lista usa)
+  useEffect(() => {
+    if (coords) onUserPositionChange?.(coords)
+  }, [coords, onUserPositionChange])
+
+  // Posição atual = nova captura OU última conhecida vinda do App
+  const currentPos = coords || userPosition
 
   const withoutGps = useMemo(
     () => hgus.filter((h) => !h.location?.lat).length,
     [hgus]
   )
+
+  function handleLocateMe() {
+    requestLocation()
+      .then(() => setRecenterTrigger((t) => t + 1))
+      .catch(() => {
+        // se já tem coords mas falhou pegar nova, ainda assim recentraliza
+        if (currentPos) setRecenterTrigger((t) => t + 1)
+      })
+  }
 
   return (
     <div className="h-[100dvh] w-screen flex flex-col bg-slate-950">
@@ -30,14 +46,24 @@ export function MapaScreen({ onNewHgu, onSelectHgu }) {
           <span className="text-slate-400 text-sm">
             {hgus.length} HGU{hgus.length !== 1 ? 's' : ''}
           </span>
+          <button
+            type="button"
+            onClick={onOpenList}
+            className="ml-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-100 text-sm font-semibold transition"
+            aria-label="Ver lista de HGUs"
+            title="Lista"
+          >
+            ☰ Lista
+          </button>
         </div>
       </header>
 
       <div className="flex-1 relative">
         <MapView
           hgus={hgus}
-          userPosition={coords}
+          userPosition={currentPos}
           onSelectHgu={onSelectHgu}
+          recenterTrigger={recenterTrigger}
         />
 
         {/* Badge: HGUs sem GPS cadastrado */}
@@ -48,18 +74,30 @@ export function MapaScreen({ onNewHgu, onSelectHgu }) {
         )}
 
         {/* Aviso de erro do GPS */}
-        {gpsError && (
+        {gpsError && !gpsLoading && (
           <div className="absolute top-3 right-3 z-[400] max-w-[60%] bg-red-950/90 backdrop-blur border border-red-800 rounded-lg px-3 py-2 text-xs text-red-200 shadow-lg">
             {gpsError}
           </div>
         )}
 
         {/* Indicador de carregamento do GPS */}
-        {gpsLoading && !coords && (
+        {gpsLoading && !currentPos && (
           <div className="absolute top-3 right-3 z-[400] bg-slate-900/90 backdrop-blur border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-300 shadow-lg">
             Capturando GPS…
           </div>
         )}
+
+        {/* Botão "Me localizar" */}
+        <button
+          type="button"
+          onClick={handleLocateMe}
+          disabled={gpsLoading}
+          className="absolute bottom-6 left-6 z-[400] bg-slate-900/95 hover:bg-slate-800 active:bg-slate-950 border border-slate-700 text-white rounded-full w-14 h-14 shadow-xl flex items-center justify-center text-2xl transition disabled:opacity-50"
+          aria-label="Me localizar"
+          title="Me localizar"
+        >
+          {gpsLoading ? '⏳' : '📍'}
+        </button>
 
         {/* Botão flutuante de cadastro */}
         <button

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { deleteHgu } from '../utils/storage.js'
 import { getAvailability, statusColor, statusLabel } from '../utils/availability.js'
+import { NavigateButton } from '../components/NavigateButton.jsx'
 
 export function DetalheScreen({ hgu, onBack, onDeleted }) {
   const [showPasswords, setShowPasswords] = useState(false)
@@ -115,12 +116,16 @@ export function DetalheScreen({ hgu, onBack, onDeleted }) {
           </div>
         )}
 
+        {/* Botão Como chegar (só se tem GPS) */}
+        {hgu.location && <NavigateButton location={hgu.location} />}
+
         {/* Dados */}
         <div className="space-y-4">
           <Field label="SSID" value={hgu.ssid} />
           <Field label="Senha WiFi" value={hgu.wifiPassword} secret revealed={showPasswords} />
           <Field label="Senha do modem" value={hgu.modemPassword} secret revealed={showPasswords} />
           <Field label="SLID" value={hgu.slid} />
+          {hgu.address && <Field label="Endereço" value={hgu.address} />}
           {hgu.note && <Field label="Anotação" value={hgu.note} />}
           {hgu.location ? (
             <Field

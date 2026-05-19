@@ -76,6 +76,7 @@ export function createHgu(input) {
     wifiPassword: input.wifiPassword.trim(),
     modemPassword: input.modemPassword.trim(),
     slid: input.slid.trim(),
+    address: input.address?.trim() || '',
     photo: input.photo || null,
     note: input.note?.trim() || '',
     location: input.location || null,

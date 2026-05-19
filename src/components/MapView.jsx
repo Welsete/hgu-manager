@@ -15,7 +15,7 @@ const DEFAULT_CENTER = [-23.5505, -46.6333]
 const DEFAULT_ZOOM = 13
 
 /**
- * Componente auxiliar que ajusta zoom/centro do mapa quando os pontos mudam.
+ * Componente auxiliar que ajusta zoom/centro do mapa quando os HGUs mudam.
  * Foi feito assim porque o Leaflet só expõe a instância do mapa via hook useMap().
  */
 function FitBounds({ points }) {
@@ -28,6 +28,20 @@ function FitBounds({ points }) {
       map.fitBounds(points, { padding: [40, 40], maxZoom: 16 })
     }
   }, [map, points])
+  return null
+}
+
+/**
+ * Voa pra posição do usuário sempre que `trigger` mudar.
+ * Usado pelo botão "Me localizar" no mapa.
+ */
+function RecenterOnUser({ userPosition, trigger }) {
+  const map = useMap()
+  useEffect(() => {
+    if (trigger > 0 && userPosition) {
+      map.flyTo([userPosition.lat, userPosition.lng], 16, { duration: 0.8 })
+    }
+  }, [trigger, userPosition, map])
   return null
 }
 
@@ -51,20 +65,19 @@ function makePinIcon(color) {
   })
 }
 
-export function MapView({ hgus, userPosition, onSelectHgu }) {
+export function MapView({ hgus, userPosition, onSelectHgu, recenterTrigger = 0 }) {
   // Só pinos para HGUs com coordenadas válidas
   const positioned = useMemo(
     () => hgus.filter((h) => h.location?.lat != null && h.location?.lng != null),
     [hgus]
   )
 
-  // Bounds = usuário + todos os HGUs com GPS
-  const bounds = useMemo(() => {
-    const pts = []
-    if (userPosition) pts.push([userPosition.lat, userPosition.lng])
-    positioned.forEach((h) => pts.push([h.location.lat, h.location.lng]))
-    return pts
-  }, [userPosition, positioned])
+  // Bounds = só os HGUs (não inclui usuário pra não refit a cada update de GPS).
+  // O fit inicial centraliza no usuário via `initialCenter`.
+  const bounds = useMemo(
+    () => positioned.map((h) => [h.location.lat, h.location.lng]),
+    [positioned]
+  )
 
   const initialCenter = userPosition
     ? [userPosition.lat, userPosition.lng]
@@ -86,6 +99,7 @@ export function MapView({ hgus, userPosition, onSelectHgu }) {
       />
 
       <FitBounds points={bounds} />
+      <RecenterOnUser userPosition={userPosition} trigger={recenterTrigger} />
 
       {userPosition && (
         <CircleMarker
