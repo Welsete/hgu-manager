@@ -1,11 +1,15 @@
+import { useState } from 'react'
 import { useGeolocation } from '../hooks/useGeolocation.js'
+import { LocationPickerModal } from './LocationPickerModal.jsx'
 
 /**
- * Botão para capturar GPS + display da coordenada e precisão.
+ * Captura GPS + opção de escolher o local no mapa (alfinete arrastável).
  * Recebe `value` ({ lat, lng, accuracy } | null) e `onChange`.
+ * `userPosition` é usado como centro inicial do seletor quando ainda não há local.
  */
-export function GpsField({ value, onChange, disabled }) {
+export function GpsField({ value, onChange, disabled, userPosition }) {
   const { loading, error, requestLocation } = useGeolocation()
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   async function handleClick() {
     try {
@@ -51,14 +55,34 @@ export function GpsField({ value, onChange, disabled }) {
         </button>
       )}
 
+      <button
+        type="button"
+        onClick={() => setPickerOpen(true)}
+        disabled={disabled}
+        className="btn-secondary text-sm mt-2"
+      >
+        📌 Escolher no mapa (arrastar alfinete)
+      </button>
+
       {error && (
         <p className="text-red-400 text-sm mt-2">{error}</p>
       )}
       {!value && !error && (
         <p className="text-slate-500 text-xs mt-1">
-          O navegador vai pedir permissão para acessar sua localização.
+          Use o GPS, ou escolha o ponto exato no mapa.
         </p>
       )}
+
+      <LocationPickerModal
+        open={pickerOpen}
+        initialLocation={value}
+        userPosition={userPosition}
+        onConfirm={(loc) => {
+          onChange(loc)
+          setPickerOpen(false)
+        }}
+        onCancel={() => setPickerOpen(false)}
+      />
     </div>
   )
 }

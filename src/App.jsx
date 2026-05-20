@@ -17,7 +17,7 @@ export default function App() {
   const [selectedHguId, setSelectedHguId] = useState(null)
   // Quando setado, o Cadastro entra em modo edição
   const [editingHguId, setEditingHguId] = useState(null)
-  // Posição atual mantida em App pra compartilhar entre Mapa e Lista
+  // Posição atual mantida em App pra compartilhar entre Mapa, Lista e Cadastro
   const [userPosition, setUserPosition] = useState(null)
   // Pedido de foco em um HGU no mapa (ts garante refire pro mesmo HGU)
   const [focusRequest, setFocusRequest] = useState(null)
@@ -57,7 +57,12 @@ export default function App() {
       }
     }
     return (
-      <CadastroScreen editingHgu={editing} onBack={goBack} onSaved={goBack} />
+      <CadastroScreen
+        editingHgu={editing}
+        onBack={goBack}
+        onSaved={goBack}
+        userPosition={userPosition}
+      />
     )
   }
 

@@ -194,16 +194,17 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
         {/* Dados */}
         <div className="space-y-4">
           <Field label="SSID" value={hgu.ssid} />
-          <Field label="Senha WiFi" value={hgu.wifiPassword} secret revealed={showPasswords} />
-          <Field label="Senha do modem" value={hgu.modemPassword} secret revealed={showPasswords} />
-          <Field label="SLID" value={hgu.slid} />
-          {hgu.address && <Field label="Endereço" value={hgu.address} />}
+          <Field label="Senha WiFi" value={hgu.wifiPassword} secret revealed={showPasswords} copyable />
+          <Field label="Senha do modem" value={hgu.modemPassword} secret revealed={showPasswords} copyable />
+          <Field label="SLID" value={hgu.slid} copyable />
+          {hgu.address && <Field label="Endereço" value={hgu.address} copyable />}
           {hgu.note && <Field label="Anotação" value={hgu.note} />}
           {hgu.location ? (
             <Field
               label="GPS"
               value={`${hgu.location.lat.toFixed(6)}, ${hgu.location.lng.toFixed(6)}`}
               hint={hgu.location.accuracy ? `Precisão ±${Math.round(hgu.location.accuracy)} m` : null}
+              copyable
             />
           ) : (
             <Field label="GPS" value="Não cadastrado" hint="Não vai aparecer no mapa." />
@@ -247,12 +248,45 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
   )
 }
 
-function Field({ label, value, secret, revealed, hint }) {
+function Field({ label, value, secret, revealed, hint, copyable }) {
+  const [copied, setCopied] = useState(false)
   const display = secret && !revealed ? '**********' : value
+
+  function handleCopy() {
+    const text = String(value ?? '')
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 1500)
+      }).catch(() => {})
+    } else {
+      // Fallback pra navegadores antigos / contexto não-seguro
+      const ta = document.createElement('textarea')
+      ta.value = text
+      document.body.appendChild(ta)
+      ta.select()
+      try { document.execCommand('copy') } catch { /* noop */ }
+      document.body.removeChild(ta)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    }
+  }
+
   return (
     <div>
       <div className="text-slate-400 text-xs uppercase tracking-wide">{label}</div>
-      <div className="text-slate-100 font-mono break-all mt-0.5">{display}</div>
+      <div className="flex items-center gap-2 mt-0.5">
+        <div className="text-slate-100 font-mono break-all flex-1">{display}</div>
+        {copyable && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="shrink-0 text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-300"
+          >
+            {copied ? '✓ Copiado' : 'Copiar'}
+          </button>
+        )}
+      </div>
       {hint && <div className="text-slate-500 text-xs mt-0.5">{hint}</div>}
     </div>
   )

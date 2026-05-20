@@ -29,7 +29,7 @@ function formFromHgu(hgu) {
   }
 }
 
-export function CadastroScreen({ onBack, onSaved, editingHgu }) {
+export function CadastroScreen({ onBack, onSaved, editingHgu, userPosition }) {
   const isEditing = !!editingHgu
   const [form, setForm] = useState(editingHgu ? formFromHgu(editingHgu) : EMPTY_FORM)
   const [showPasswords, setShowPasswords] = useState(false)
@@ -159,6 +159,7 @@ export function CadastroScreen({ onBack, onSaved, editingHgu }) {
           value={form.location}
           onChange={(v) => update('location', v)}
           disabled={submitting}
+          userPosition={userPosition}
         />
 
         <AddressField
