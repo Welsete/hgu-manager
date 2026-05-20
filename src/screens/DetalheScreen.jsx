@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { deleteHgu } from '../utils/storage.js'
+import { deleteHgu, registerMagicToolUse, updateHgu } from '../utils/storage.js'
 import { getAvailability, statusColor, statusLabel } from '../utils/availability.js'
 import { NavigateButton } from '../components/NavigateButton.jsx'
 
-export function DetalheScreen({ hgu, onBack, onDeleted }) {
+export function DetalheScreen({ hgu: hguProp, onBack, onDeleted }) {
+  // Estado local pra atualizar a UI na hora ao registrar/limpar uso
+  const [hgu, setHgu] = useState(hguProp)
   const [showPasswords, setShowPasswords] = useState(false)
+  const [flash, setFlash] = useState(null) // mensagem de feedback temporária
 
   if (!hgu) {
     return (
@@ -19,6 +22,40 @@ export function DetalheScreen({ hgu, onBack, onDeleted }) {
 
   const { status, daysSinceUse, daysUntilAvailable } = getAvailability(hgu)
   const color = statusColor(status)
+
+  function showFlash(msg) {
+    setFlash(msg)
+    setTimeout(() => setFlash(null), 3000)
+  }
+
+  function handleUseMagicTool() {
+    let message =
+      'Confirmar uso do Magic Tool agora?\n\nIsso vai bloquear esse HGU por 7 dias.'
+    if (status !== 'available') {
+      const faltam = Math.ceil(daysUntilAvailable)
+      message =
+        `⚠️ ATENÇÃO: esse HGU foi usado recentemente e ainda faltam ${faltam} dia${faltam !== 1 ? 's' : ''} para liberar.\n\n` +
+        'Usar mesmo assim vai REINICIAR o bloqueio de 7 dias a partir de agora.\n\nTem certeza?'
+    }
+    if (!window.confirm(message)) return
+    const updated = registerMagicToolUse(hgu.id)
+    if (updated) {
+      setHgu(updated)
+      showFlash('Uso do Magic Tool registrado. HGU bloqueado por 7 dias.')
+    }
+  }
+
+  function handleClearUse() {
+    const ok = window.confirm(
+      'Limpar o último uso registrado?\n\nO HGU vai voltar a ficar disponível. Use isso só se registrou por engano.'
+    )
+    if (!ok) return
+    const updated = updateHgu(hgu.id, { lastMagicToolUse: null })
+    if (updated) {
+      setHgu(updated)
+      showFlash('Último uso limpo. HGU disponível novamente.')
+    }
+  }
 
   function handleDelete() {
     const ok = window.confirm(`Apagar o HGU "${hgu.ssid}"?\n\nEsta ação não pode ser desfeita.`)
@@ -98,6 +135,28 @@ export function DetalheScreen({ hgu, onBack, onDeleted }) {
           )}
         </div>
 
+        {/* Mensagem de feedback */}
+        {flash && (
+          <div className="rounded-lg bg-emerald-950/70 border border-emerald-700 text-emerald-200 px-3 py-2 text-sm">
+            {flash}
+          </div>
+        )}
+
+        {/* AÇÃO PRINCIPAL: Usar Magic Tool agora */}
+        <button
+          type="button"
+          onClick={handleUseMagicTool}
+          className={
+            status === 'available'
+              ? 'btn-primary text-lg'
+              : 'w-full rounded-lg bg-amber-700 hover:bg-amber-600 active:bg-amber-800 text-white font-semibold py-3 px-4 text-lg transition'
+          }
+        >
+          {status === 'available'
+            ? '✓ Usar Magic Tool agora'
+            : '⚠️ Usar Magic Tool mesmo assim'}
+        </button>
+
         {/* Foto + botão de download */}
         {hgu.photo && (
           <div className="space-y-2">
@@ -150,16 +209,17 @@ export function DetalheScreen({ hgu, onBack, onDeleted }) {
           {showPasswords ? '🔒 Ocultar senhas' : '👁 Mostrar senhas'}
         </button>
 
-        {/* Ações */}
+        {/* Ações secundárias */}
         <div className="pt-4 border-t border-slate-800 space-y-3">
-          <button
-            type="button"
-            disabled
-            className="btn-primary opacity-50 cursor-not-allowed"
-            title="Disponível no Módulo 3"
-          >
-            Usar Magic Tool agora (em breve)
-          </button>
+          {hgu.lastMagicToolUse && (
+            <button
+              type="button"
+              onClick={handleClearUse}
+              className="btn-secondary text-sm"
+            >
+              ↺ Corrigir último uso (registrei por engano)
+            </button>
+          )}
 
           <button
             type="button"
