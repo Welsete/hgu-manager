@@ -3,7 +3,7 @@ import { deleteHgu, registerMagicToolUse, updateHgu } from '../utils/storage.js'
 import { getAvailability, statusColor, statusLabel } from '../utils/availability.js'
 import { NavigateButton } from '../components/NavigateButton.jsx'
 
-export function DetalheScreen({ hgu: hguProp, onBack, onDeleted }) {
+export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap }) {
   // Estado local pra atualizar a UI na hora ao registrar/limpar uso
   const [hgu, setHgu] = useState(hguProp)
   const [showPasswords, setShowPasswords] = useState(false)
@@ -66,7 +66,6 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted }) {
 
   function handleDownloadPhoto() {
     if (!hgu.photo) return
-    // Nome amigável pra usar no Zeus — só letras/números/underscore
     const safe = (s) => (s || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40)
     const filename = `HGU_${safe(hgu.ssid)}_${safe(hgu.slid)}.jpg`
     const a = document.createElement('a')
@@ -81,7 +80,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted }) {
     <div className="min-h-screen bg-slate-950">
       <header className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-2">
-          <button onClick={onBack} className="btn-ghost" type="button">← Voltar</button>
+          <button onClick={onBack} className="btn-ghost" type="button">&larr; Voltar</button>
           <h1 className="text-lg font-semibold flex-1 text-center pr-16 truncate">
             {hgu.ssid}
           </h1>
@@ -95,7 +94,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted }) {
           style={{ borderColor: color, backgroundColor: color + '1a' }}
         >
           <div className="flex items-center gap-3">
-            <span className="text-3xl leading-none" style={{ color }}>●</span>
+            <span className="text-3xl leading-none" style={{ color }}>&#9679;</span>
             <div>
               <div className="font-bold text-lg" style={{ color }}>
                 {statusLabel(status)}
@@ -170,13 +169,24 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted }) {
               onClick={handleDownloadPhoto}
               className="btn-secondary"
             >
-              📥 Baixar foto (para o Zeus)
+              {'📥'} Baixar foto (para o Zeus)
             </button>
           </div>
         )}
 
-        {/* Botão Como chegar (só se tem GPS) */}
-        {hgu.location && <NavigateButton location={hgu.location} />}
+        {/* Ações de localização (só se tem GPS) */}
+        {hgu.location && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => onShowOnMap?.(hgu)}
+              className="btn-secondary"
+            >
+              {'🗺️'} Mostrar no mapa
+            </button>
+            <NavigateButton location={hgu.location} />
+          </div>
+        )}
 
         {/* Dados */}
         <div className="space-y-4">
@@ -206,7 +216,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted }) {
           onClick={() => setShowPasswords((s) => !s)}
           className="btn-secondary"
         >
-          {showPasswords ? '🔒 Ocultar senhas' : '👁 Mostrar senhas'}
+          {showPasswords ? 'Ocultar senhas' : 'Mostrar senhas'}
         </button>
 
         {/* Ações secundárias */}
@@ -217,7 +227,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted }) {
               onClick={handleClearUse}
               className="btn-secondary text-sm"
             >
-              ↺ Corrigir último uso (registrei por engano)
+              {'↺'} Corrigir último uso (registrei por engano)
             </button>
           )}
 
@@ -235,7 +245,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted }) {
 }
 
 function Field({ label, value, secret, revealed, hint }) {
-  const display = secret && !revealed ? '••••••••••' : value
+  const display = secret && !revealed ? '**********' : value
   return (
     <div>
       <div className="text-slate-400 text-xs uppercase tracking-wide">{label}</div>

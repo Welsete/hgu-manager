@@ -17,6 +17,8 @@ export default function App() {
   const [selectedHguId, setSelectedHguId] = useState(null)
   // Posição atual mantida em App pra compartilhar entre Mapa e Lista
   const [userPosition, setUserPosition] = useState(null)
+  // Pedido de foco em um HGU no mapa (ts garante refire pro mesmo HGU)
+  const [focusRequest, setFocusRequest] = useState(null)
 
   // Lê do storage a cada render — barato e sempre fresco
   const selectedHgu = selectedHguId ? getHgu(selectedHguId) : null
@@ -24,6 +26,11 @@ export default function App() {
   function openDetalhe(hgu) {
     setSelectedHguId(hgu.id)
     setScreen(SCREENS.DETALHE)
+  }
+
+  function showOnMap(hgu) {
+    setFocusRequest({ hguId: hgu.id, ts: Date.now() })
+    setScreen(SCREENS.MAPA)
   }
 
   if (screen === SCREENS.CADASTRO) {
@@ -47,6 +54,7 @@ export default function App() {
           setSelectedHguId(null)
           setScreen(SCREENS.MAPA)
         }}
+        onShowOnMap={showOnMap}
       />
     )
   }
@@ -68,6 +76,7 @@ export default function App() {
       onOpenList={() => setScreen(SCREENS.LISTA)}
       userPosition={userPosition}
       onUserPositionChange={setUserPosition}
+      focusRequest={focusRequest}
     />
   )
 }

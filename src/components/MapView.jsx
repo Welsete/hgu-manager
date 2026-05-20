@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import {
   MapContainer,
   TileLayer,
@@ -46,6 +46,28 @@ function RecenterOnUser({ userPosition, trigger }) {
 }
 
 /**
+ * Foca um HGU específico (voa até ele e abre o popup) quando focusRequest muda.
+ * Usado pelo botão "Mostrar no mapa" da tela de Detalhe.
+ */
+function FocusController({ focusRequest, hgus, markerRefs }) {
+  const map = useMap()
+  useEffect(() => {
+    if (!focusRequest?.hguId) return
+    const hgu = hgus.find((h) => h.id === focusRequest.hguId)
+    if (!hgu?.location?.lat) return
+    map.flyTo([hgu.location.lat, hgu.location.lng], 17, { duration: 0.8 })
+    // Abre o popup depois que a animação termina e o marker já renderizou
+    const t = setTimeout(() => {
+      const marker = markerRefs.current[focusRequest.hguId]
+      if (marker) marker.openPopup()
+    }, 900)
+    return () => clearTimeout(t)
+    // ts dentro do focusRequest garante refire mesmo pro mesmo HGU
+  }, [focusRequest, hgus, map, markerRefs])
+  return null
+}
+
+/**
  * Cria um ícone de pino circular colorido (usando divIcon do Leaflet).
  * Evita o bug dos ícones default do Leaflet que não carregam em bundlers.
  */
@@ -65,7 +87,10 @@ function makePinIcon(color) {
   })
 }
 
-export function MapView({ hgus, userPosition, onSelectHgu, recenterTrigger = 0 }) {
+export function MapView({ hgus, userPosition, onSelectHgu, recenterTrigger = 0, focusRequest = null }) {
+  // Guarda refs dos markers por id pra abrir o popup programaticamente
+  const markerRefs = useRef({})
+
   // Só pinos para HGUs com coordenadas válidas
   const positioned = useMemo(
     () => hgus.filter((h) => h.location?.lat != null && h.location?.lng != null),
@@ -100,6 +125,7 @@ export function MapView({ hgus, userPosition, onSelectHgu, recenterTrigger = 0 }
 
       <FitBounds points={bounds} />
       <RecenterOnUser userPosition={userPosition} trigger={recenterTrigger} />
+      <FocusController focusRequest={focusRequest} hgus={positioned} markerRefs={markerRefs} />
 
       {userPosition && (
         <CircleMarker
@@ -124,6 +150,9 @@ export function MapView({ hgus, userPosition, onSelectHgu, recenterTrigger = 0 }
             key={hgu.id}
             position={[hgu.location.lat, hgu.location.lng]}
             icon={makePinIcon(color)}
+            ref={(el) => {
+              if (el) markerRefs.current[hgu.id] = el
+            }}
           >
             <Popup>
               <div style={{ minWidth: 180, fontFamily: 'inherit' }}>
