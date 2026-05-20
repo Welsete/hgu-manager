@@ -15,6 +15,8 @@ const SCREENS = {
 export default function App() {
   const [screen, setScreen] = useState(SCREENS.MAPA)
   const [selectedHguId, setSelectedHguId] = useState(null)
+  // Quando setado, o Cadastro entra em modo edição
+  const [editingHguId, setEditingHguId] = useState(null)
   // Posição atual mantida em App pra compartilhar entre Mapa e Lista
   const [userPosition, setUserPosition] = useState(null)
   // Pedido de foco em um HGU no mapa (ts garante refire pro mesmo HGU)
@@ -33,12 +35,29 @@ export default function App() {
     setScreen(SCREENS.MAPA)
   }
 
+  function openCadastroNew() {
+    setEditingHguId(null)
+    setScreen(SCREENS.CADASTRO)
+  }
+
+  function openCadastroEdit(hgu) {
+    setEditingHguId(hgu.id)
+    setScreen(SCREENS.CADASTRO)
+  }
+
   if (screen === SCREENS.CADASTRO) {
+    const editing = editingHguId ? getHgu(editingHguId) : null
+    // Se estava editando, volta pro detalhe; senão, pro mapa
+    const goBack = () => {
+      if (editingHguId) {
+        setEditingHguId(null)
+        setScreen(SCREENS.DETALHE)
+      } else {
+        setScreen(SCREENS.MAPA)
+      }
+    }
     return (
-      <CadastroScreen
-        onBack={() => setScreen(SCREENS.MAPA)}
-        onSaved={() => setScreen(SCREENS.MAPA)}
-      />
+      <CadastroScreen editingHgu={editing} onBack={goBack} onSaved={goBack} />
     )
   }
 
@@ -55,6 +74,7 @@ export default function App() {
           setScreen(SCREENS.MAPA)
         }}
         onShowOnMap={showOnMap}
+        onEdit={openCadastroEdit}
       />
     )
   }
@@ -71,7 +91,7 @@ export default function App() {
 
   return (
     <MapaScreen
-      onNewHgu={() => setScreen(SCREENS.CADASTRO)}
+      onNewHgu={openCadastroNew}
       onSelectHgu={openDetalhe}
       onOpenList={() => setScreen(SCREENS.LISTA)}
       userPosition={userPosition}

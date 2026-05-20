@@ -3,7 +3,7 @@ import { TextField } from '../components/TextField.jsx'
 import { PhotoInput } from '../components/PhotoInput.jsx'
 import { GpsField } from '../components/GpsField.jsx'
 import { AddressField } from '../components/AddressField.jsx'
-import { createHgu } from '../utils/storage.js'
+import { createHgu, updateHgu } from '../utils/storage.js'
 
 const EMPTY_FORM = {
   ssid: '',
@@ -16,8 +16,22 @@ const EMPTY_FORM = {
   location: null
 }
 
-export function CadastroScreen({ onBack, onSaved }) {
-  const [form, setForm] = useState(EMPTY_FORM)
+function formFromHgu(hgu) {
+  return {
+    ssid: hgu.ssid || '',
+    wifiPassword: hgu.wifiPassword || '',
+    modemPassword: hgu.modemPassword || '',
+    slid: hgu.slid || '',
+    note: hgu.note || '',
+    address: hgu.address || '',
+    photo: hgu.photo || null,
+    location: hgu.location || null
+  }
+}
+
+export function CadastroScreen({ onBack, onSaved, editingHgu }) {
+  const isEditing = !!editingHgu
+  const [form, setForm] = useState(editingHgu ? formFromHgu(editingHgu) : EMPTY_FORM)
   const [showPasswords, setShowPasswords] = useState(false)
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
@@ -45,10 +59,23 @@ export function CadastroScreen({ onBack, onSaved }) {
 
     setSubmitting(true)
     try {
-      const hgu = createHgu(form)
-      // Reseta o form para permitir cadastrar outro em sequência
-      setForm(EMPTY_FORM)
-      onSaved?.(hgu)
+      if (isEditing) {
+        const updated = updateHgu(editingHgu.id, {
+          ssid: form.ssid.trim(),
+          wifiPassword: form.wifiPassword.trim(),
+          modemPassword: form.modemPassword.trim(),
+          slid: form.slid.trim(),
+          note: form.note.trim(),
+          address: form.address.trim(),
+          photo: form.photo,
+          location: form.location
+        })
+        onSaved?.(updated)
+      } else {
+        const hgu = createHgu(form)
+        setForm(EMPTY_FORM)
+        onSaved?.(hgu)
+      }
     } catch (err) {
       setSubmitError(err.message || 'Erro ao salvar HGU.')
     } finally {
@@ -71,8 +98,10 @@ export function CadastroScreen({ onBack, onSaved }) {
     <div className="min-h-screen bg-slate-950">
       <header className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-2">
-          <button onClick={onBack} className="btn-ghost" type="button">← Voltar</button>
-          <h1 className="text-lg font-semibold flex-1 text-center pr-16">Cadastrar HGU</h1>
+          <button onClick={onBack} className="btn-ghost" type="button">&larr; Voltar</button>
+          <h1 className="text-lg font-semibold flex-1 text-center pr-16">
+            {isEditing ? 'Editar HGU' : 'Cadastrar HGU'}
+          </h1>
         </div>
       </header>
 
@@ -136,6 +165,7 @@ export function CadastroScreen({ onBack, onSaved }) {
           value={form.address}
           onChange={(v) => update('address', v)}
           location={form.location}
+          onLocationFromAddress={(loc) => update('location', loc)}
         />
 
         <PhotoInput
@@ -151,7 +181,7 @@ export function CadastroScreen({ onBack, onSaved }) {
         )}
 
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'Salvando…' : 'Salvar HGU'}
+          {submitting ? 'Salvando…' : isEditing ? 'Salvar alterações' : 'Salvar HGU'}
         </button>
 
         <p className="text-center text-slate-500 text-xs">

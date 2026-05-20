@@ -1,20 +1,17 @@
-// Geocodificação reversa via Nominatim (OpenStreetMap) — grátis, sem API key.
+// Geocodificação via Nominatim (OpenStreetMap) — grátis, sem API key.
 // Política de uso: max 1 req/s, requer User-Agent (browsers já enviam).
-// Docs: https://nominatim.org/release-docs/develop/api/Reverse/
 
-const NOMINATIM = 'https://nominatim.openstreetmap.org/reverse'
+const NOMINATIM_REVERSE = 'https://nominatim.openstreetmap.org/reverse'
+const NOMINATIM_SEARCH = 'https://nominatim.openstreetmap.org/search'
 
 /**
- * Converte coordenadas em um endereço formatado.
- * @returns {Promise<string|null>} endereço amigável ou null se falhou
+ * Geocodificação reversa: coordenadas -> endereço formatado.
+ * @returns {Promise<string|null>}
  */
 export async function reverseGeocode(lat, lng, signal) {
-  const url = `${NOMINATIM}?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=pt-BR&zoom=18`
+  const url = `${NOMINATIM_REVERSE}?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=pt-BR&zoom=18`
   try {
-    const res = await fetch(url, {
-      headers: { Accept: 'application/json' },
-      signal
-    })
+    const res = await fetch(url, { headers: { Accept: 'application/json' }, signal })
     if (!res.ok) return null
     const data = await res.json()
     if (!data?.display_name) return null
@@ -27,8 +24,34 @@ export async function reverseGeocode(lat, lng, signal) {
 }
 
 /**
- * Monta um endereço compacto a partir dos campos retornados pelo Nominatim.
- * Padrão: "Rua, número, bairro, cidade - UF".
+ * Geocodificação direta: endereço em texto -> coordenadas.
+ * Usado para cadastrar um HGU sem estar no local.
+ * @returns {Promise<{ lat: number, lng: number, displayName: string }|null>}
+ */
+export async function forwardGeocode(query, signal) {
+  if (!query || !query.trim()) return null
+  const url =
+    `${NOMINATIM_SEARCH}?format=json&q=${encodeURIComponent(query.trim())}` +
+    `&limit=1&accept-language=pt-BR&countrycodes=br`
+  try {
+    const res = await fetch(url, { headers: { Accept: 'application/json' }, signal })
+    if (!res.ok) return null
+    const data = await res.json()
+    if (!Array.isArray(data) || data.length === 0) return null
+    const first = data[0]
+    const lat = parseFloat(first.lat)
+    const lng = parseFloat(first.lon)
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return null
+    return { lat, lng, displayName: first.display_name || query }
+  } catch (err) {
+    if (err.name === 'AbortError') return null
+    console.warn('forwardGeocode falhou:', err)
+    return null
+  }
+}
+
+/**
+ * Monta um endereço compacto: "Rua, número, bairro, cidade - UF".
  */
 function formatAddress(data) {
   const a = data.address || {}

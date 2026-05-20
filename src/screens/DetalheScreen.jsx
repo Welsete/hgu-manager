@@ -3,7 +3,7 @@ import { deleteHgu, registerMagicToolUse, updateHgu } from '../utils/storage.js'
 import { getAvailability, statusColor, statusLabel } from '../utils/availability.js'
 import { NavigateButton } from '../components/NavigateButton.jsx'
 
-export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap }) {
+export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, onEdit }) {
   // Estado local pra atualizar a UI na hora ao registrar/limpar uso
   const [hgu, setHgu] = useState(hguProp)
   const [showPasswords, setShowPasswords] = useState(false)
@@ -81,9 +81,12 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap }) 
       <header className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-2">
           <button onClick={onBack} className="btn-ghost" type="button">&larr; Voltar</button>
-          <h1 className="text-lg font-semibold flex-1 text-center pr-16 truncate">
+          <h1 className="text-lg font-semibold flex-1 text-center truncate">
             {hgu.ssid}
           </h1>
+          <button onClick={() => onEdit?.(hgu)} className="btn-ghost" type="button">
+            {'✏️'} Editar
+          </button>
         </div>
       </header>
 
