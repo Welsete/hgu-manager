@@ -1,14 +1,19 @@
-// Regra dos 7 dias para uso do Magic Tool no mesmo HGU.
+// Regra dos 15 dias para reuso do Magic Tool no mesmo HGU.
 //
-// 🟢 Disponível    → nunca usado OU último uso há >= 7 dias
-// 🟡 Quase liberando → último uso entre 5 e 7 dias
-// 🔴 Bloqueado     → último uso há < 5 dias
+// 🟢 Disponível      → nunca usado OU último uso há >= 15 dias
+// 🟡 Quase liberando → faltam até 2 dias para completar 15 (ou seja, 13 a 15 dias)
+// 🔴 Bloqueado       → último uso há menos de 13 dias
 
 export const STATUS = {
   AVAILABLE: 'available',
   WARNING: 'warning',
   BLOCKED: 'blocked'
 }
+
+// Ciclo de reuso e janela do aviso "quase liberando".
+// Centralizado aqui pra facilitar mudar a regra no futuro.
+export const CYCLE_DAYS = 15
+const WARNING_WINDOW_DAYS = 2
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
@@ -29,13 +34,13 @@ export function getAvailability(hgu, now = Date.now()) {
 
   const days = (now - lastUse) / MS_PER_DAY
 
-  if (days >= 7) {
+  if (days >= CYCLE_DAYS) {
     return { status: STATUS.AVAILABLE, daysSinceUse: days, daysUntilAvailable: 0 }
   }
-  if (days >= 5) {
-    return { status: STATUS.WARNING, daysSinceUse: days, daysUntilAvailable: 7 - days }
+  if (days >= CYCLE_DAYS - WARNING_WINDOW_DAYS) {
+    return { status: STATUS.WARNING, daysSinceUse: days, daysUntilAvailable: CYCLE_DAYS - days }
   }
-  return { status: STATUS.BLOCKED, daysSinceUse: days, daysUntilAvailable: 7 - days }
+  return { status: STATUS.BLOCKED, daysSinceUse: days, daysUntilAvailable: CYCLE_DAYS - days }
 }
 
 export function statusLabel(status) {

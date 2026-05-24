@@ -37,7 +37,7 @@ export function HomeScreen({ count, onNewHgu, lastSaved }) {
           <p className="font-semibold text-slate-300">Próximos módulos:</p>
           <ul className="list-disc list-inside space-y-1">
             <li>Mapa com pinos coloridos (Módulo 2)</li>
-            <li>Botão "Usar Magic Tool agora" + regra dos 7 dias (Módulo 3)</li>
+            <li>Botão "Usar Magic Tool agora" + regra dos 15 dias (Módulo 3)</li>
             <li>Lista, busca e refinamentos (Módulo 4)</li>
           </ul>
         </div>

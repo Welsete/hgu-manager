@@ -30,18 +30,18 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
 
   function handleUseMagicTool() {
     let message =
-      'Confirmar uso do Magic Tool agora?\n\nIsso vai bloquear esse HGU por 7 dias.'
+      'Confirmar uso do Magic Tool agora?\n\nIsso vai bloquear esse HGU por 15 dias.'
     if (status !== 'available') {
       const faltam = Math.ceil(daysUntilAvailable)
       message =
         `⚠️ ATENÇÃO: esse HGU foi usado recentemente e ainda faltam ${faltam} dia${faltam !== 1 ? 's' : ''} para liberar.\n\n` +
-        'Usar mesmo assim vai REINICIAR o bloqueio de 7 dias a partir de agora.\n\nTem certeza?'
+        'Usar mesmo assim vai REINICIAR o bloqueio de 15 dias a partir de agora.\n\nTem certeza?'
     }
     if (!window.confirm(message)) return
     const updated = registerMagicToolUse(hgu.id)
     if (updated) {
       setHgu(updated)
-      showFlash('Uso do Magic Tool registrado. HGU bloqueado por 7 dias.')
+      showFlash('Uso do Magic Tool registrado. HGU bloqueado por 15 dias.')
     }
   }
 
