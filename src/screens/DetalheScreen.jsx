@@ -194,6 +194,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
         {/* Dados */}
         <div className="space-y-4">
           <Field label="SSID" value={hgu.ssid} />
+          {hgu.type && <Field label="Tipo de HGU" value={hgu.type} />}
           <Field label="Senha WiFi" value={hgu.wifiPassword} secret revealed={showPasswords} copyable />
           <Field label="Senha do modem" value={hgu.modemPassword} secret revealed={showPasswords} copyable />
           <Field label="SLID" value={hgu.slid} copyable />

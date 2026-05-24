@@ -3,10 +3,12 @@ import { TextField } from '../components/TextField.jsx'
 import { PhotoInput } from '../components/PhotoInput.jsx'
 import { GpsField } from '../components/GpsField.jsx'
 import { AddressField } from '../components/AddressField.jsx'
+import { TypeSelector } from '../components/TypeSelector.jsx'
 import { createHgu, updateHgu } from '../utils/storage.js'
 
 const EMPTY_FORM = {
   ssid: '',
+  type: '',
   wifiPassword: '',
   modemPassword: '',
   slid: '',
@@ -19,6 +21,7 @@ const EMPTY_FORM = {
 function formFromHgu(hgu) {
   return {
     ssid: hgu.ssid || '',
+    type: hgu.type || '',
     wifiPassword: hgu.wifiPassword || '',
     modemPassword: hgu.modemPassword || '',
     slid: hgu.slid || '',
@@ -62,6 +65,7 @@ export function CadastroScreen({ onBack, onSaved, editingHgu, userPosition }) {
       if (isEditing) {
         const updated = updateHgu(editingHgu.id, {
           ssid: form.ssid.trim(),
+          type: form.type.trim(),
           wifiPassword: form.wifiPassword.trim(),
           modemPassword: form.modemPassword.trim(),
           slid: form.slid.trim(),
@@ -113,6 +117,11 @@ export function CadastroScreen({ onBack, onSaved, editingHgu, userPosition }) {
           placeholder="Ex: VIVO-FIBRA-A1B2"
           required
           error={errors.ssid}
+        />
+
+        <TypeSelector
+          value={form.type}
+          onChange={(v) => update('type', v)}
         />
 
         <TextField

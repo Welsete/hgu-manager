@@ -99,6 +99,7 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold truncate">{hgu.ssid}</div>
                     <div className="text-xs text-slate-400 truncate">
+                      {hgu.type ? `${hgu.type} · ` : ''}
                       {statusLabel(hgu._availability.status)}
                       {hgu.address ? ` · ${hgu.address}` : ''}
                     </div>
