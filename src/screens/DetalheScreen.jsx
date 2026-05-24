@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { deleteHgu, registerMagicToolUse, updateHgu } from '../utils/storage.js'
 import { getAvailability, statusColor, statusLabel } from '../utils/availability.js'
 import { NavigateButton } from '../components/NavigateButton.jsx'
+import { shareHgus } from '../utils/share.js'
 
 export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, onEdit }) {
   // Estado local pra atualizar a UI na hora ao registrar/limpar uso
@@ -74,6 +75,12 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
+  }
+
+  async function handleShare() {
+    const r = await shareHgus([hgu], `HGU ${hgu.ssid}`)
+    if (r.method === 'clipboard') showFlash('Link copiado! Cole no WhatsApp para enviar.')
+    else if (r.method === 'none') showFlash('Não consegui compartilhar neste navegador.')
   }
 
   return (
@@ -222,6 +229,14 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
           className="btn-secondary"
         >
           {showPasswords ? 'Ocultar senhas' : 'Mostrar senhas'}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleShare}
+          className="btn-secondary"
+        >
+          {'📤'} Compartilhar HGU
         </button>
 
         {/* Ações secundárias */}

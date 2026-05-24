@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { listHgus } from '../utils/storage.js'
 import { getAvailability, statusColor, statusLabel } from '../utils/availability.js'
 import { haversine, formatDistance } from '../utils/distance.js'
+import { shareHgus } from '../utils/share.js'
 
 const FILTERS = {
   ALL: 'all',
@@ -11,6 +12,7 @@ const FILTERS = {
 export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
   const [hgus, setHgus] = useState([])
   const [filter, setFilter] = useState(FILTERS.ALL)
+  const [shareMsg, setShareMsg] = useState(null)
 
   useEffect(() => {
     setHgus(listHgus())
@@ -50,12 +52,33 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
     })
   }, [enriched, filter])
 
+  async function handleShareAll() {
+    if (hgus.length === 0) return
+    const r = await shareHgus(hgus, `${hgus.length} HGUs compartilhados`)
+    if (r.method === 'clipboard') {
+      setShareMsg('Link copiado! Cole no WhatsApp para enviar.')
+      setTimeout(() => setShareMsg(null), 3000)
+    } else if (r.method === 'none') {
+      setShareMsg('Não consegui compartilhar neste navegador.')
+      setTimeout(() => setShareMsg(null), 3000)
+    }
+  }
+
   return (
     <div className="min-h-[100dvh] bg-slate-950">
       <header className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-2">
           <button onClick={onBack} className="btn-ghost" type="button">← Mapa</button>
-          <h1 className="text-lg font-semibold flex-1 text-center pr-16">HGUs Próximos</h1>
+          <h1 className="text-lg font-semibold flex-1 text-center">HGUs Próximos</h1>
+          <button
+            onClick={handleShareAll}
+            className="btn-ghost"
+            type="button"
+            disabled={hgus.length === 0}
+            title="Compartilhar todos"
+          >
+            {'📤'}
+          </button>
         </div>
         <div className="max-w-xl mx-auto px-4 pb-3 grid grid-cols-2 gap-2">
           <FilterButton
@@ -72,6 +95,11 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
       </header>
 
       <main className="max-w-xl mx-auto px-4 py-4 space-y-2 pb-20">
+        {shareMsg && (
+          <div className="rounded-lg bg-emerald-950/70 border border-emerald-700 text-emerald-100 px-3 py-2 text-sm mb-2">
+            {shareMsg}
+          </div>
+        )}
         {!userPosition && (
           <div className="rounded-lg bg-slate-900/60 border border-slate-700 px-3 py-2 text-xs text-slate-400 mb-3">
             Sem GPS no momento — distâncias indisponíveis.

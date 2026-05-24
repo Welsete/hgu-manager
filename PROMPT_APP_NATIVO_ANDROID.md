@@ -14,7 +14,7 @@ técnico de instalação de fibra óptica (ICOMON / Vivo).
 **Problema que resolve:** quando o app **Magic Tool** (da Vivo, usado para validar
 instalações e reparos) dá erro no HGU/modem do cliente, o técnico precisa rodar a
 validação como "manobra" em **outro HGU** já conhecido. A regra é que o **mesmo HGU
-só pode ser reutilizado a cada 7 dias**. O app cataloga os HGUs de clientes (rede WiFi,
+só pode ser reutilizado a cada 15 dias**. O app cataloga os HGUs de clientes (rede WiFi,
 senhas, serial, foto, localização) e mostra no mapa quais estão **disponíveis** para uso
 dentro do prazo permitido.
 
@@ -38,23 +38,24 @@ dentro do prazo permitido.
 
 ---
 
-## Regra de negócio — disponibilidade (os 7 dias)
+## Regra de negócio — disponibilidade (os 15 dias)
 
 Cada HGU tem um campo "último uso do Magic Tool". O status é calculado assim:
 
 | Status | Condição | Cor |
 |---|---|---|
-| **Disponível** | Nunca usado **ou** último uso há **7 dias ou mais** | 🟢 Verde |
-| **Quase liberando** | Último uso entre **5 e 7 dias** atrás | 🟡 Amarelo |
-| **Bloqueado** | Último uso há **menos de 5 dias** | 🔴 Vermelho |
+| **Disponível** | Nunca usado **ou** último uso há **15 dias ou mais** | 🟢 Verde |
+| **Quase liberando** | Último uso entre **13 e 15 dias** atrás (faltam até 2 dias) | 🟡 Amarelo |
+| **Bloqueado** | Último uso há **menos de 13 dias** | 🔴 Vermelho |
 
-O status deve ser dinâmico (recalculado pela data atual sempre que a tela abre).
+O status deve ser dinâmico (recalculado pela data atual sempre que a tela abre). Mantenha o número de dias do ciclo em uma **constante única** no código, pois essa regra já mudou (era 7 dias) e pode mudar de novo.
 
 ---
 
 ## Modelo de dados (por HGU)
 
 - **SSID** — nome da rede WiFi (obrigatório)
+- **Tipo de HGU** — categoria selecionável e **editável** (ex: HGU 5, HGU 5 HPNA, HGU 6, HGU com telefone). O usuário deve poder **adicionar novos tipos** na hora, e eles ficam salvos para os próximos cadastros (opcional)
 - **Senha do WiFi** (obrigatório)
 - **Senha do modem** — acesso ao painel admin, ex. 192.168.15.1 (obrigatório)
 - **SLID** — serial do equipamento (obrigatório)
@@ -86,6 +87,7 @@ O status deve ser dinâmico (recalculado pela data atual sempre que a tela abre)
 
 ### 3. Cadastro / Edição de HGU
 - Formulário com todos os campos do modelo de dados.
+- **Tipo de HGU**: um seletor (dropdown) com as categorias salvas + um botão **"Adicionar novo tipo"** que cria e salva uma nova categoria na hora.
 - Mostrar/ocultar senhas.
 - **GPS**: botão para capturar a posição atual.
 - **Escolher no mapa**: abre um mapa com um **alfinete arrastável** — o usuário arrasta
@@ -102,9 +104,10 @@ O status deve ser dinâmico (recalculado pela data atual sempre que a tela abre)
 ### 4. Detalhe do HGU
 - **Card de status** colorido (Disponível / Quase liberando / Bloqueado) com contagem
   de dias.
+- Exibir o **Tipo de HGU** junto dos dados.
 - **Card "Último uso do Magic Tool"** com data/hora (ou "Nunca usado").
 - **Botão "Usar Magic Tool agora"**: registra o uso com a data/hora atual e bloqueia o
-  HGU por 7 dias. **Sempre pede confirmação.** Se o HGU ainda estiver bloqueado/amarelo,
+  HGU por 15 dias. **Sempre pede confirmação.** Se o HGU ainda estiver bloqueado/amarelo,
   o botão fica laranja com aviso reforçado, mas permite usar mesmo assim (o usuário decide).
 - **Botão "Corrigir último uso"**: limpa o registro de último uso (volta a disponível),
   para o caso de toque acidental.
@@ -158,7 +161,7 @@ app contém dados úteis do cliente (como o **SLID**, dados do equipamento, ende
 
 ### C) Outros recursos nativos que agregam
 - **GPS nativo** (mais preciso que o navegador).
-- **Notificações locais**: avisar quando um HGU bloqueado **liberar** (completar 7 dias),
+- **Notificações locais**: avisar quando um HGU bloqueado **liberar** (completar 15 dias),
   para o técnico saber que voltou a ficar disponível. (Opcional, mas desejável.)
 - **Intents** para abrir Waze/Google Maps na navegação.
 - Funcionamento **100% offline**.

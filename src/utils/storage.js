@@ -115,6 +115,42 @@ export function countHgus() {
 }
 
 /**
+ * Importa HGUs recebidos (de um link compartilhado). Gera novos ids e pula
+ * duplicados (mesmo SSID + SLID). Fotos não vêm no compartilhamento.
+ * @returns {{ added: number, skipped: number }}
+ */
+export function importHgus(incoming) {
+  if (!Array.isArray(incoming)) return { added: 0, skipped: 0 }
+  const list = readAll()
+  let added = 0
+  let skipped = 0
+  for (const item of incoming) {
+    if (!item?.ssid || !item?.slid) { skipped++; continue }
+    const dup = list.some(
+      (h) => h.slid === item.slid && h.ssid === item.ssid
+    )
+    if (dup) { skipped++; continue }
+    list.push({
+      id: generateId(),
+      ssid: String(item.ssid).trim(),
+      type: item.type?.trim() || '',
+      wifiPassword: item.wifiPassword || '',
+      modemPassword: item.modemPassword || '',
+      slid: String(item.slid).trim(),
+      address: item.address?.trim() || '',
+      photo: null,
+      note: item.note?.trim() || '',
+      location: item.location || null,
+      createdAt: new Date().toISOString(),
+      lastMagicToolUse: item.lastMagicToolUse || null
+    })
+    added++
+  }
+  writeAll(list)
+  return { added, skipped }
+}
+
+/**
  * Marca uso do Magic Tool agora.
  */
 export function registerMagicToolUse(id) {

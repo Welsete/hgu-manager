@@ -3,7 +3,9 @@ import { MapaScreen } from './screens/MapaScreen.jsx'
 import { CadastroScreen } from './screens/CadastroScreen.jsx'
 import { DetalheScreen } from './screens/DetalheScreen.jsx'
 import { ListaScreen } from './screens/ListaScreen.jsx'
+import { ImportScreen } from './screens/ImportScreen.jsx'
 import { getHgu } from './utils/storage.js'
+import { readImportFromUrl, clearImportFromUrl } from './utils/share.js'
 
 const SCREENS = {
   MAPA: 'mapa',
@@ -21,6 +23,8 @@ export default function App() {
   const [userPosition, setUserPosition] = useState(null)
   // Pedido de foco em um HGU no mapa (ts garante refire pro mesmo HGU)
   const [focusRequest, setFocusRequest] = useState(null)
+  // HGUs recebidos por link (#import=...) — se houver, mostra a tela de importação
+  const [importItems, setImportItems] = useState(() => readImportFromUrl())
 
   // Lê do storage a cada render — barato e sempre fresco
   const selectedHgu = selectedHguId ? getHgu(selectedHguId) : null
@@ -45,9 +49,22 @@ export default function App() {
     setScreen(SCREENS.CADASTRO)
   }
 
+  // Importação tem prioridade sobre tudo
+  if (importItems !== null) {
+    return (
+      <ImportScreen
+        incoming={importItems}
+        onDone={() => {
+          clearImportFromUrl()
+          setImportItems(null)
+          setScreen(SCREENS.MAPA)
+        }}
+      />
+    )
+  }
+
   if (screen === SCREENS.CADASTRO) {
     const editing = editingHguId ? getHgu(editingHguId) : null
-    // Se estava editando, volta pro detalhe; senão, pro mapa
     const goBack = () => {
       if (editingHguId) {
         setEditingHguId(null)
