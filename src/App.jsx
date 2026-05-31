@@ -4,8 +4,10 @@ import { CadastroScreen } from './screens/CadastroScreen.jsx'
 import { DetalheScreen } from './screens/DetalheScreen.jsx'
 import { ListaScreen } from './screens/ListaScreen.jsx'
 import { ImportScreen } from './screens/ImportScreen.jsx'
+import { TermsModal } from './components/TermsModal.jsx'
 import { getHgu } from './utils/storage.js'
 import { readImportFromUrl, clearImportFromUrl } from './utils/share.js'
+import { isTermsAccepted } from './utils/terms.js'
 
 const SCREENS = {
   MAPA: 'mapa',
@@ -23,22 +25,22 @@ export default function App() {
   const [focusRequest, setFocusRequest] = useState(null)
   const [importItems, setImportItems] = useState(() => readImportFromUrl())
 
+  // Termos: 'hidden' | 'initial' (precisa aceitar) | 'view' (consulta)
+  const [termsMode, setTermsMode] = useState(() => (isTermsAccepted() ? 'hidden' : 'initial'))
+
   const selectedHgu = selectedHguId ? getHgu(selectedHguId) : null
 
-  // Se chegou com link de import, empilha um estado pra que o botão Voltar
-  // dispense o import e volte pro mapa em vez de sair do app.
+  // Empilha history pra import-ativo
   useEffect(() => {
     if (importItems !== null) {
       window.history.pushState({ screen: IMPORT_SCREEN }, '')
     }
-    // executa só na montagem
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Botão Voltar do navegador / Android: restaura o estado a partir do history
+  // Botão Voltar do navegador / Android
   useEffect(() => {
     function onPop(e) {
-      // Qualquer back limpa import ativo
       setImportItems(null)
       const s = e.state
       if (s?.screen && s.screen !== IMPORT_SCREEN) {
@@ -49,7 +51,6 @@ export default function App() {
           setFocusRequest({ hguId: s.focusHguId, ts: Date.now() })
         }
       } else {
-        // Sem estado: voltou pra raiz (Mapa)
         setScreen(SCREENS.MAPA)
         setSelectedHguId(null)
         setEditingHguId(null)
@@ -59,12 +60,19 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
-  // Empilha uma entrada de histórico ao navegar pra qualquer tela não-raiz.
+  // Listener pro link "Termos" reabrir o modal em modo consulta
+  useEffect(() => {
+    function onShow() {
+      setTermsMode((prev) => (prev === 'hidden' ? 'view' : prev))
+    }
+    window.addEventListener('show-terms', onShow)
+    return () => window.removeEventListener('show-terms', onShow)
+  }, [])
+
   function pushScreen(extraState) {
     window.history.pushState({ ...extraState }, '')
   }
 
-  // UI Voltar: simplesmente usa o histórico — o popstate restaura
   function goBack() {
     window.history.back()
   }
@@ -101,8 +109,6 @@ export default function App() {
 
   function dismissImport() {
     clearImportFromUrl()
-    // Tenta voltar via histórico (caso tenha sido empilhado na montagem).
-    // Se não houver entrada (carregamento fresco sem empilhar), faz fallback.
     if (window.history.state?.screen === IMPORT_SCREEN) {
       window.history.back()
     } else {
@@ -111,53 +117,77 @@ export default function App() {
     }
   }
 
-  // Importação tem prioridade sobre tudo
-  if (importItems !== null) {
-    return <ImportScreen incoming={importItems} onDone={dismissImport} />
-  }
-
-  if (screen === SCREENS.CADASTRO) {
-    const editing = editingHguId ? getHgu(editingHguId) : null
+  // Termos obrigatórios bloqueiam o app na primeira vez
+  if (termsMode === 'initial') {
     return (
-      <CadastroScreen
-        editingHgu={editing}
-        onBack={goBack}
-        onSaved={goBack}
-        userPosition={userPosition}
+      <TermsModal
+        open
+        mode="initial"
+        onAccept={() => setTermsMode('hidden')}
       />
     )
   }
 
-  if (screen === SCREENS.DETALHE) {
-    return (
-      <DetalheScreen
-        hgu={selectedHgu}
-        onBack={goBack}
-        onDeleted={goBack}
-        onShowOnMap={showOnMap}
-        onEdit={openCadastroEdit}
-      />
-    )
-  }
+  // Renderiza a tela atual; o modal de consulta aparece sobreposto
+  const mainScreen = (() => {
+    if (importItems !== null) {
+      return <ImportScreen incoming={importItems} onDone={dismissImport} />
+    }
 
-  if (screen === SCREENS.LISTA) {
+    if (screen === SCREENS.CADASTRO) {
+      const editing = editingHguId ? getHgu(editingHguId) : null
+      return (
+        <CadastroScreen
+          editingHgu={editing}
+          onBack={goBack}
+          onSaved={goBack}
+          userPosition={userPosition}
+        />
+      )
+    }
+
+    if (screen === SCREENS.DETALHE) {
+      return (
+        <DetalheScreen
+          hgu={selectedHgu}
+          onBack={goBack}
+          onDeleted={goBack}
+          onShowOnMap={showOnMap}
+          onEdit={openCadastroEdit}
+        />
+      )
+    }
+
+    if (screen === SCREENS.LISTA) {
+      return (
+        <ListaScreen
+          userPosition={userPosition}
+          onBack={goBack}
+          onSelectHgu={openDetalhe}
+        />
+      )
+    }
+
     return (
-      <ListaScreen
-        userPosition={userPosition}
-        onBack={goBack}
+      <MapaScreen
+        onNewHgu={openCadastroNew}
         onSelectHgu={openDetalhe}
+        onOpenList={openLista}
+        userPosition={userPosition}
+        onUserPositionChange={setUserPosition}
+        focusRequest={focusRequest}
       />
     )
-  }
+  })()
 
   return (
-    <MapaScreen
-      onNewHgu={openCadastroNew}
-      onSelectHgu={openDetalhe}
-      onOpenList={openLista}
-      userPosition={userPosition}
-      onUserPositionChange={setUserPosition}
-      focusRequest={focusRequest}
-    />
+    <>
+      {mainScreen}
+      <TermsModal
+        open={termsMode === 'view'}
+        mode="view"
+        onClose={() => setTermsMode('hidden')}
+      />
+    </>
   )
 }
