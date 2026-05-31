@@ -3,7 +3,7 @@ import { MapView } from '../components/MapView.jsx'
 import { useGeolocation } from '../hooks/useGeolocation.js'
 import { listHgus } from '../utils/storage.js'
 
-export function MapaScreen({ onNewHgu, onSelectHgu, onOpenList, userPosition, onUserPositionChange }) {
+export function MapaScreen({ onNewHgu, onSelectHgu, onOpenList, userPosition, onUserPositionChange, focusRequest }) {
   const [hgus, setHgus] = useState([])
   const { coords, requestLocation, error: gpsError, loading: gpsLoading } = useGeolocation()
   const [recenterTrigger, setRecenterTrigger] = useState(0)
@@ -64,6 +64,7 @@ export function MapaScreen({ onNewHgu, onSelectHgu, onOpenList, userPosition, on
           userPosition={currentPos}
           onSelectHgu={onSelectHgu}
           recenterTrigger={recenterTrigger}
+          focusRequest={focusRequest}
         />
 
         {/* Badge: HGUs sem GPS cadastrado */}
