@@ -10,30 +10,35 @@ import {
 import L from 'leaflet'
 import { getAvailability, statusColor, statusLabel } from '../utils/availability.js'
 
-// Centro padrão: São Paulo. Só usado quando não há nem GPS nem HGUs.
-const DEFAULT_CENTER = [-23.5505, -46.6333]
+const DEFAULT_CENTER = [-23.5505, -46.6333] // São Paulo
 const DEFAULT_ZOOM = 13
 
 /**
- * Componente auxiliar que ajusta zoom/centro do mapa quando os HGUs mudam.
- * Foi feito assim porque o Leaflet só expõe a instância do mapa via hook useMap().
+ * Faz fit dos pinos quando os HGUs mudam.
+ * Se `skipInitialRef.current === true`, pula o PRIMEIRO fit (pra não atrapalhar
+ * um foco específico que acabou de chegar).
  */
-function FitBounds({ points }) {
+function FitBounds({ points, skipInitialRef }) {
   const map = useMap()
+  const didFit = useRef(false)
   useEffect(() => {
     if (!points || points.length === 0) return
+    if (!didFit.current && skipInitialRef?.current) {
+      didFit.current = true
+      return
+    }
     if (points.length === 1) {
       map.setView(points[0], 16)
     } else {
       map.fitBounds(points, { padding: [40, 40], maxZoom: 16 })
     }
-  }, [map, points])
+    didFit.current = true
+  }, [map, points, skipInitialRef])
   return null
 }
 
 /**
- * Voa pra posição do usuário sempre que `trigger` mudar.
- * Usado pelo botão "Me localizar" no mapa.
+ * Voa pra posição do usuário sempre que `trigger` mudar (botão Me localizar).
  */
 function RecenterOnUser({ userPosition, trigger }) {
   const map = useMap()
@@ -46,8 +51,8 @@ function RecenterOnUser({ userPosition, trigger }) {
 }
 
 /**
- * Foca um HGU específico (voa até ele e abre o popup) quando focusRequest muda.
- * Usado pelo botão "Mostrar no mapa" da tela de Detalhe.
+ * Foca um HGU específico (voa e abre o popup) quando focusRequest muda.
+ * Pequeno atraso garante que rode após qualquer fit-bounds inicial.
  */
 function FocusController({ focusRequest, hgus, markerRefs }) {
   const map = useMap()
@@ -55,23 +60,50 @@ function FocusController({ focusRequest, hgus, markerRefs }) {
     if (!focusRequest?.hguId) return
     const hgu = hgus.find((h) => h.id === focusRequest.hguId)
     if (!hgu?.location?.lat) return
-    map.flyTo([hgu.location.lat, hgu.location.lng], 17, { duration: 0.8 })
-    // Abre o popup depois que a animação termina e o marker já renderizou
-    const t = setTimeout(() => {
+    const flyT = setTimeout(() => {
+      map.flyTo([hgu.location.lat, hgu.location.lng], 17, { duration: 0.6 })
+    }, 120)
+    const popupT = setTimeout(() => {
       const marker = markerRefs.current[focusRequest.hguId]
       if (marker) marker.openPopup()
     }, 900)
-    return () => clearTimeout(t)
-    // ts dentro do focusRequest garante refire mesmo pro mesmo HGU
+    return () => {
+      clearTimeout(flyT)
+      clearTimeout(popupT)
+    }
   }, [focusRequest, hgus, map, markerRefs])
   return null
 }
 
 /**
- * Cria um ícone de pino circular colorido (usando divIcon do Leaflet).
- * Evita o bug dos ícones default do Leaflet que não carregam em bundlers.
+ * Ícone de pino. Quando `focused` é true, vira um pino maior com anel pulsante.
  */
-function makePinIcon(color) {
+function makePinIcon(color, focused) {
+  if (focused) {
+    return L.divIcon({
+      className: '',
+      html: `
+        <div style="position: relative; width: 40px; height: 40px;">
+          <div style="
+            position: absolute; inset: -10px;
+            border: 3px solid ${color};
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: hgu-pulse 1.5s ease-out infinite;
+          "></div>
+          <div style="
+            position: absolute; inset: 0;
+            background: ${color};
+            border: 4px solid white;
+            border-radius: 50%;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.7);
+          "></div>
+        </div>`,
+      iconSize: [40, 40],
+      iconAnchor: [20, 20],
+      popupAnchor: [0, -20]
+    })
+  }
   return L.divIcon({
     className: 'hgu-pin',
     html: `<div style="
@@ -88,17 +120,15 @@ function makePinIcon(color) {
 }
 
 export function MapView({ hgus, userPosition, onSelectHgu, recenterTrigger = 0, focusRequest = null }) {
-  // Guarda refs dos markers por id pra abrir o popup programaticamente
   const markerRefs = useRef({})
+  // Capturado UMA vez no primeiro render: se há foco pendente, pula o fit inicial
+  const skipInitialFitRef = useRef(!!focusRequest?.hguId)
 
-  // Só pinos para HGUs com coordenadas válidas
   const positioned = useMemo(
     () => hgus.filter((h) => h.location?.lat != null && h.location?.lng != null),
     [hgus]
   )
 
-  // Bounds = só os HGUs (não inclui usuário pra não refit a cada update de GPS).
-  // O fit inicial centraliza no usuário via `initialCenter`.
   const bounds = useMemo(
     () => positioned.map((h) => [h.location.lat, h.location.lng]),
     [positioned]
@@ -109,6 +139,8 @@ export function MapView({ hgus, userPosition, onSelectHgu, recenterTrigger = 0, 
     : positioned[0]
     ? [positioned[0].location.lat, positioned[0].location.lng]
     : DEFAULT_CENTER
+
+  const focusedId = focusRequest?.hguId || null
 
   return (
     <MapContainer
@@ -123,7 +155,7 @@ export function MapView({ hgus, userPosition, onSelectHgu, recenterTrigger = 0, 
         maxZoom={19}
       />
 
-      <FitBounds points={bounds} />
+      <FitBounds points={bounds} skipInitialRef={skipInitialFitRef} />
       <RecenterOnUser userPosition={userPosition} trigger={recenterTrigger} />
       <FocusController focusRequest={focusRequest} hgus={positioned} markerRefs={markerRefs} />
 
@@ -145,11 +177,13 @@ export function MapView({ hgus, userPosition, onSelectHgu, recenterTrigger = 0, 
       {positioned.map((hgu) => {
         const { status } = getAvailability(hgu)
         const color = statusColor(status)
+        const isFocused = focusedId === hgu.id
         return (
           <Marker
             key={hgu.id}
             position={[hgu.location.lat, hgu.location.lng]}
-            icon={makePinIcon(color)}
+            icon={makePinIcon(color, isFocused)}
+            zIndexOffset={isFocused ? 1000 : 0}
             ref={(el) => {
               if (el) markerRefs.current[hgu.id] = el
             }}
