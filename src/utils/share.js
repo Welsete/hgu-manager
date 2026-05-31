@@ -1,4 +1,4 @@
-// Compartilhamento de HGUs via link (sem servidor).
+// Compartilhamento de dispositivos via link (sem servidor).
 // Os dados vão codificados em base64url no hash da URL: /#import=<código>.
 // A foto NÃO é incluída (deixaria o link grande demais).
 
@@ -56,11 +56,11 @@ export function buildShareUrl(hgus) {
  * Se não tiver suporte, copia o link pra área de transferência.
  * @returns {Promise<{ ok: boolean, method: 'share'|'clipboard'|'cancel'|'none', url?: string }>}
  */
-export async function shareHgus(hgus, title = 'HGU compartilhado') {
+export async function shareHgus(hgus, title = 'Dispositivo compartilhado') {
   const url = buildShareUrl(hgus)
   if (navigator.share) {
     try {
-      await navigator.share({ title: 'HGU Manager', text: title, url })
+      await navigator.share({ title: 'Well dispositivo', text: title, url })
       return { ok: true, method: 'share' }
     } catch (err) {
       if (err.name === 'AbortError') return { ok: false, method: 'cancel' }
@@ -76,7 +76,7 @@ export async function shareHgus(hgus, title = 'HGU compartilhado') {
 }
 
 /**
- * Lê HGUs recebidos no hash da URL (#import=...). Retorna array ou null.
+ * Lê Dispositivos recebidos no hash da URL (#import=...). Retorna array ou null.
  */
 export function readImportFromUrl() {
   const hash = window.location.hash || ''

@@ -1,4 +1,4 @@
-// Regra dos 15 dias para reuso do Magic Tool no mesmo HGU.
+// Regra dos 15 dias para reuso da Validação no mesmo dispositivo.
 //
 // 🟢 Disponível      → nunca usado OU último uso há >= 15 dias
 // 🟡 Quase liberando → faltam até 2 dias para completar 15 (ou seja, 13 a 15 dias)
@@ -18,7 +18,7 @@ const WARNING_WINDOW_DAYS = 2
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
 /**
- * Calcula a disponibilidade do HGU no momento `now`.
+ * Calcula a disponibilidade do dispositivo no momento `now`.
  * @param {object} hgu
  * @param {number} [now] - timestamp ms (default: Date.now())
  * @returns {{ status: string, daysSinceUse: number|null, daysUntilAvailable: number }}

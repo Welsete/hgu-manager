@@ -14,7 +14,7 @@ const DEFAULT_CENTER = [-23.5505, -46.6333] // São Paulo
 const DEFAULT_ZOOM = 13
 
 /**
- * Faz fit dos pinos quando os HGUs mudam.
+ * Faz fit dos pinos quando os dispositivos mudam.
  * Se `skipInitialRef.current === true`, pula o PRIMEIRO fit (pra não atrapalhar
  * um foco específico que acabou de chegar).
  */
@@ -51,7 +51,7 @@ function RecenterOnUser({ userPosition, trigger }) {
 }
 
 /**
- * Foca um HGU específico (voa e abre o popup) quando focusRequest muda.
+ * Foca um dispositivo específico (voa e abre o popup) quando focusRequest muda.
  * Pequeno atraso garante que rode após qualquer fit-bounds inicial.
  */
 function FocusController({ focusRequest, hgus, markerRefs }) {

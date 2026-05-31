@@ -25,7 +25,7 @@ export async function reverseGeocode(lat, lng, signal) {
 
 /**
  * Geocodificação direta: endereço em texto -> coordenadas.
- * Usado para cadastrar um HGU sem estar no local.
+ * Usado para cadastrar um dispositivo sem estar no local.
  * @returns {Promise<{ lat: number, lng: number, displayName: string }|null>}
  */
 export async function forwardGeocode(query, signal) {

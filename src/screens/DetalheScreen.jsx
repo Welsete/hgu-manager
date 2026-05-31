@@ -17,7 +17,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-slate-400 mb-4">HGU não encontrado.</p>
+          <p className="text-slate-400 mb-4">Dispositivo não encontrado.</p>
           <button onClick={onBack} className="btn-secondary">Voltar ao mapa</button>
         </div>
       </div>
@@ -34,35 +34,35 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
 
   function handleUseMagicTool() {
     let message =
-      'Confirmar uso do Magic Tool agora?\n\nIsso vai bloquear esse HGU por 15 dias.'
+      'Confirmar uso da Validação agora?\n\nIsso vai bloquear esse dispositivo por 15 dias.'
     if (status !== 'available') {
       const faltam = Math.ceil(daysUntilAvailable)
       message =
-        `⚠️ ATENÇÃO: esse HGU foi usado recentemente e ainda faltam ${faltam} dia${faltam !== 1 ? 's' : ''} para liberar.\n\n` +
+        `⚠️ ATENÇÃO: esse dispositivo foi usado recentemente e ainda faltam ${faltam} dia${faltam !== 1 ? 's' : ''} para liberar.\n\n` +
         'Usar mesmo assim vai REINICIAR o bloqueio de 15 dias a partir de agora.\n\nTem certeza?'
     }
     if (!window.confirm(message)) return
     const updated = registerMagicToolUse(hgu.id)
     if (updated) {
       setHgu(updated)
-      showFlash('Uso do Magic Tool registrado. HGU bloqueado por 15 dias.')
+      showFlash('Uso do Validação registrado. Dispositivo bloqueado por 15 dias.')
     }
   }
 
   function handleClearUse() {
     const ok = window.confirm(
-      'Limpar o último uso registrado?\n\nO HGU vai voltar a ficar disponível. Use isso só se registrou por engano.'
+      'Limpar o último uso registrado?\n\nO Dispositivo vai voltar a ficar disponível. Use isso só se registrou por engano.'
     )
     if (!ok) return
     const updated = updateHgu(hgu.id, { lastMagicToolUse: null })
     if (updated) {
       setHgu(updated)
-      showFlash('Último uso limpo. HGU disponível novamente.')
+      showFlash('Último uso limpo. Dispositivo disponível novamente.')
     }
   }
 
   function handleDelete() {
-    const ok = window.confirm(`Apagar o HGU "${hgu.ssid}"?\n\nEsta ação não pode ser desfeita.`)
+    const ok = window.confirm(`Apagar o dispositivo "${hgu.ssid}"?\n\nEsta ação não pode ser desfeita.`)
     if (!ok) return
     deleteHgu(hgu.id)
     onDeleted?.()
@@ -71,7 +71,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
   function handleDownloadPhoto() {
     if (!hgu.photo) return
     const safe = (s) => (s || '').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40)
-    const filename = `HGU_${safe(hgu.ssid)}_${safe(hgu.slid)}.jpg`
+    const filename = `dispositivo_${safe(hgu.ssid)}_${safe(hgu.slid)}.jpg`
     const a = document.createElement('a')
     a.href = hgu.photo
     a.download = filename
@@ -115,7 +115,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
   }
 
   async function handleShare() {
-    const r = await shareHgus([hgu], `HGU ${hgu.ssid}`)
+    const r = await shareHgus([hgu], `Dispositivo ${hgu.ssid}`)
     if (r.method === 'clipboard') showFlash('Link copiado! Cole no WhatsApp para enviar.')
     else if (r.method === 'none') showFlash('Não consegui compartilhar neste navegador.')
   }
@@ -148,7 +148,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
               </div>
               <div className="text-sm text-slate-300">
                 {daysSinceUse == null
-                  ? 'Nunca usado para Magic Tool'
+                  ? 'Nunca utilizado'
                   : status === 'available'
                   ? `Último uso há ${Math.floor(daysSinceUse)} dia${Math.floor(daysSinceUse) !== 1 ? 's' : ''}`
                   : `Libera em ${Math.ceil(daysUntilAvailable)} dia${Math.ceil(daysUntilAvailable) !== 1 ? 's' : ''}`}
@@ -160,7 +160,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
         {/* Card de último uso (sempre visível) */}
         <div className="rounded-lg bg-slate-900 border border-slate-800 p-4">
           <div className="text-slate-400 text-xs uppercase tracking-wide mb-1">
-            Último uso do Magic Tool
+            Último uso da Validação
           </div>
           {hgu.lastMagicToolUse ? (
             <>
@@ -223,7 +223,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
           </div>
         )}
 
-        {/* AÇÃO PRINCIPAL: Usar Magic Tool agora */}
+        {/* AÇÃO PRINCIPAL: Usar Validação agora */}
         <button
           type="button"
           onClick={handleUseMagicTool}
@@ -234,8 +234,8 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
           }
         >
           {status === 'available'
-            ? '✓ Usar Magic Tool agora'
-            : '⚠️ Usar Magic Tool mesmo assim'}
+            ? '✓ Usar Validação agora'
+            : '⚠️ Validar mesmo assim'}
         </button>
 
         {/* Foto + botão de download */}
@@ -251,7 +251,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
               onClick={handleDownloadPhoto}
               className="btn-secondary"
             >
-              {'📥'} Baixar foto (para o Zeus)
+              {'📥'} Baixar foto (para o sistema externo)
             </button>
           </div>
         )}
@@ -273,10 +273,10 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
         {/* Dados */}
         <div className="space-y-4">
           <Field label="SSID" value={hgu.ssid} />
-          {hgu.type && <Field label="Tipo de HGU" value={hgu.type} />}
-          <Field label="Senha WiFi" value={hgu.wifiPassword} secret revealed={showPasswords} copyable />
-          <Field label="Senha do modem" value={hgu.modemPassword} secret revealed={showPasswords} copyable />
-          <Field label="SLID" value={hgu.slid} copyable />
+          {hgu.type && <Field label="Tipo" value={hgu.type} />}
+          <Field label="Senha de rede" value={hgu.wifiPassword} secret revealed={showPasswords} copyable />
+          <Field label="Senha admin" value={hgu.modemPassword} secret revealed={showPasswords} copyable />
+          <Field label="Código" value={hgu.slid} copyable />
           {hgu.address && <Field label="Endereço" value={hgu.address} copyable />}
           {hgu.note && <Field label="Anotação" value={hgu.note} />}
           {hgu.location ? (
@@ -308,7 +308,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
           onClick={handleShare}
           className="btn-secondary"
         >
-          {'📤'} Compartilhar HGU
+          {'📤'} Compartilhar dispositivo
         </button>
 
         {/* Ações secundárias */}
@@ -328,7 +328,7 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
             onClick={handleDelete}
             className="w-full rounded-lg bg-red-950 hover:bg-red-900 active:bg-red-950 text-red-200 font-semibold py-3 px-4 transition border border-red-800"
           >
-            Apagar HGU
+            Apagar dispositivo
           </button>
         </div>
 

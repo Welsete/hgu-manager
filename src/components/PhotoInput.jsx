@@ -26,13 +26,13 @@ export function PhotoInput({ value, onChange, disabled }) {
 
   return (
     <div>
-      <label className="label-base">Foto do HGU (opcional)</label>
+      <label className="label-base">Foto do dispositivo (opcional)</label>
 
       {value ? (
         <div className="space-y-2">
           <img
             src={value}
-            alt="Foto do HGU"
+            alt="Foto do dispositivo"
             className="w-full max-h-64 object-cover rounded-lg border border-slate-700"
           />
           <button

@@ -51,7 +51,7 @@ export function CadastroScreen({ onBack, onSaved, editingHgu, userPosition }) {
     if (!form.ssid.trim()) next.ssid = 'Informe o SSID'
     if (!form.wifiPassword.trim()) next.wifiPassword = 'Informe a senha do WiFi'
     if (!form.modemPassword.trim()) next.modemPassword = 'Informe a senha do modem'
-    if (!form.slid.trim()) next.slid = 'Informe o SLID'
+    if (!form.slid.trim()) next.slid = 'Informe o código'
     setErrors(next)
     return Object.keys(next).length === 0
   }
@@ -82,7 +82,7 @@ export function CadastroScreen({ onBack, onSaved, editingHgu, userPosition }) {
         onSaved?.(hgu)
       }
     } catch (err) {
-      setSubmitError(err.message || 'Erro ao salvar HGU.')
+      setSubmitError(err.message || 'Erro ao salvar dispositivo.')
     } finally {
       setSubmitting(false)
     }
@@ -105,7 +105,7 @@ export function CadastroScreen({ onBack, onSaved, editingHgu, userPosition }) {
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-2">
           <button onClick={onBack} className="btn-ghost" type="button">&larr; Voltar</button>
           <h1 className="text-lg font-semibold flex-1 text-center pr-16">
-            {isEditing ? 'Editar HGU' : 'Cadastrar HGU'}
+            {isEditing ? 'Editar dispositivo' : 'Cadastrar dispositivo'}
           </h1>
         </div>
       </header>
@@ -126,7 +126,7 @@ export function CadastroScreen({ onBack, onSaved, editingHgu, userPosition }) {
         />
 
         <TextField
-          label="Senha do WiFi"
+          label="Senha de rede"
           type={showPasswords ? 'text' : 'password'}
           value={form.wifiPassword}
           onChange={(v) => update('wifiPassword', v)}
@@ -137,7 +137,7 @@ export function CadastroScreen({ onBack, onSaved, editingHgu, userPosition }) {
         />
 
         <TextField
-          label="Senha do modem (painel admin)"
+          label="Senha admin"
           type={showPasswords ? 'text' : 'password'}
           value={form.modemPassword}
           onChange={(v) => update('modemPassword', v)}
@@ -149,7 +149,7 @@ export function CadastroScreen({ onBack, onSaved, editingHgu, userPosition }) {
         />
 
         <TextField
-          label="SLID (serial do equipamento)"
+          label="Código (serial)"
           value={form.slid}
           onChange={(v) => update('slid', v)}
           placeholder="Ex: ALCL12345678"
@@ -192,7 +192,7 @@ export function CadastroScreen({ onBack, onSaved, editingHgu, userPosition }) {
         )}
 
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'Salvando…' : isEditing ? 'Salvar alterações' : 'Salvar HGU'}
+          {submitting ? 'Salvando…' : isEditing ? 'Salvar alterações' : 'Salvar dispositivo'}
         </button>
 
         <p className="text-center text-slate-500 text-xs">

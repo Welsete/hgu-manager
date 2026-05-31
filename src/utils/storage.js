@@ -1,18 +1,18 @@
-// Camada de persistência local para HGUs.
-// Mantém todos os HGUs em uma única chave do localStorage como JSON.
+// Camada de persistência local para dispositivos.
+// Mantém todos os dispositivos em uma única chave do localStorage como JSON.
 // Nas próximas iterações pode migrar para IndexedDB ou Firestore sem mudar a API.
 
 const STORAGE_KEY = 'hgu-manager:hgus:v1'
 const CATEGORIES_KEY = 'hgu-manager:categories:v1'
 
-// Tipos de HGU conhecidos (seed). O usuário pode adicionar mais.
-const DEFAULT_CATEGORIES = ['HGU 5', 'HGU 5 HPNA', 'HGU 6', 'HGU com telefone']
+// Tipos de dispositivo conhecidos (seed). O usuário pode adicionar mais.
+const DEFAULT_CATEGORIES = ['dispositivo 5', 'dispositivo 5 HPNA', 'dispositivo 6', 'dispositivo com telefone']
 
 /**
- * @typedef {Object} HGU
+ * @typedef {Object} dispositivo
  * @property {string} id            - UUID gerado no cadastro
  * @property {string} ssid          - Nome da rede WiFi
- * @property {string} type          - Tipo/categoria do HGU (ex: "HGU 6")
+ * @property {string} type          - Tipo/categoria do dispositivo (ex: "dispositivo 6")
  * @property {string} wifiPassword  - Senha da rede WiFi
  * @property {string} modemPassword - Senha do painel admin do modem
  * @property {string} slid          - Serial do equipamento
@@ -31,7 +31,7 @@ function readAll() {
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) ? parsed : []
   } catch (err) {
-    console.error('Falha ao ler HGUs do localStorage:', err)
+    console.error('Falha ao ler dispositivos do localStorage:', err)
     return []
   }
 }
@@ -42,7 +42,7 @@ function writeAll(list) {
     return true
   } catch (err) {
     // Quota excedida geralmente acontece com fotos grandes em base64
-    console.error('Falha ao salvar HGUs no localStorage:', err)
+    console.error('Falha ao salvar dispositivos no localStorage:', err)
     return false
   }
 }
@@ -63,8 +63,8 @@ export function getHgu(id) {
 }
 
 /**
- * Cria um novo HGU. Retorna o objeto criado ou lança erro de validação.
- * @param {Partial<HGU>} input
+ * Cria um novo dispositivo. Retorna o objeto criado ou lança erro de validação.
+ * @param {Partial<dispositivo>} input
  */
 export function createHgu(input) {
   const errors = validateHguInput(input)
@@ -115,7 +115,7 @@ export function countHgus() {
 }
 
 /**
- * Importa HGUs recebidos (de um link compartilhado). Gera novos ids e pula
+ * Importa Dispositivos recebidos (de um link compartilhado). Gera novos ids e pula
  * duplicados (mesmo SSID + SLID). Fotos não vêm no compartilhamento.
  * @returns {{ added: number, skipped: number }}
  */
@@ -151,7 +151,7 @@ export function importHgus(incoming) {
 }
 
 /**
- * Marca uso do Magic Tool agora.
+ * Marca uso da Validação agora.
  */
 export function registerMagicToolUse(id) {
   return updateHgu(id, { lastMagicToolUse: new Date().toISOString() })
@@ -159,20 +159,20 @@ export function registerMagicToolUse(id) {
 
 /**
  * Validação simples — campos obrigatórios.
- * @param {Partial<HGU>} input
+ * @param {Partial<dispositivo>} input
  * @returns {string[]} lista de campos com erro
  */
 export function validateHguInput(input) {
   const errors = []
   if (!input?.ssid?.trim()) errors.push('SSID')
-  if (!input?.wifiPassword?.trim()) errors.push('Senha WiFi')
-  if (!input?.modemPassword?.trim()) errors.push('Senha do modem')
+  if (!input?.wifiPassword?.trim()) errors.push('Senha de rede')
+  if (!input?.modemPassword?.trim()) errors.push('Senha admin')
   if (!input?.slid?.trim()) errors.push('SLID')
   return errors
 }
 
 // ---------------------------------------------------------------------------
-// Categorias / tipos de HGU (editáveis pelo usuário)
+// Categorias / tipos de dispositivo (editáveis pelo usuário)
 // ---------------------------------------------------------------------------
 
 function writeCategories(list) {

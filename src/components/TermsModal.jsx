@@ -33,7 +33,7 @@ export function TermsModal({ open, mode = 'initial', onAccept, onClose }) {
           </p>
 
           <Section title="1. Armazenamento local">
-            Todos os dados cadastrados (HGUs, SSIDs, senhas, endereços, fotos, coordenadas
+            Todos os dados cadastrados (dispositivos, identificadores de rede, senhas, endereços, fotos, coordenadas
             GPS) ficam armazenados <strong>exclusivamente no seu próprio dispositivo</strong>,
             usando o armazenamento local do navegador (localStorage). Nenhum dado é enviado,
             coletado ou acessado pelo desenvolvedor.

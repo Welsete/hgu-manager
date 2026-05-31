@@ -9,17 +9,17 @@ export function HomeScreen({ count, onNewHgu, lastSaved }) {
         <div className="max-w-xl mx-auto px-4 py-4">
           <h1 className="text-xl font-bold flex items-center gap-2">
             <span className="text-emerald-400">●</span>
-            HGU Manager
+            dispositivo Manager
           </h1>
           <p className="text-slate-400 text-sm">
-            Catálogo de HGUs e gerenciador do Magic Tool
+            Catálogo de dispositivos e gerenciador do Validação
           </p>
         </div>
       </header>
 
       <main className="flex-1 max-w-xl mx-auto w-full px-4 py-6 space-y-6">
         <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-          <div className="text-slate-400 text-sm">HGUs cadastrados</div>
+          <div className="text-slate-400 text-sm">Dispositivos cadastrados</div>
           <div className="text-4xl font-bold mt-1">{count}</div>
         </div>
 
@@ -30,14 +30,14 @@ export function HomeScreen({ count, onNewHgu, lastSaved }) {
         )}
 
         <button onClick={onNewHgu} className="btn-primary text-lg">
-          + Cadastrar novo HGU
+          + Cadastrar novo
         </button>
 
         <div className="rounded-lg bg-slate-900/60 border border-slate-800 p-4 text-sm text-slate-400 space-y-2">
           <p className="font-semibold text-slate-300">Próximos módulos:</p>
           <ul className="list-disc list-inside space-y-1">
             <li>Mapa com pinos coloridos (Módulo 2)</li>
-            <li>Botão "Usar Magic Tool agora" + regra dos 15 dias (Módulo 3)</li>
+            <li>Botão "Usar Validação agora" + regra dos 15 dias (Módulo 3)</li>
             <li>Lista, busca e refinamentos (Módulo 4)</li>
           </ul>
         </div>

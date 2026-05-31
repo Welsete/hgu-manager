@@ -32,7 +32,7 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
     })
   }, [hgus, userPosition])
 
-  // Tipos presentes nos HGUs cadastrados (pra montar o dropdown)
+  // Tipos presentes nos Dispositivos cadastrados (pra montar o dropdown)
   const availableTypes = useMemo(() => {
     const set = new Set()
     hgus.forEach((h) => { if (h.type) set.add(h.type) })
@@ -66,7 +66,7 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
 
   async function handleShareAll() {
     if (hgus.length === 0) return
-    const r = await shareHgus(hgus, `${hgus.length} HGUs compartilhados`)
+    const r = await shareHgus(hgus, `${hgus.length} dispositivos compartilhados`)
     if (r.method === 'clipboard') {
       setShareMsg('Link copiado! Cole no WhatsApp para enviar.')
       setTimeout(() => setShareMsg(null), 3000)
@@ -81,7 +81,7 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
       <header className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-2">
           <button onClick={onBack} className="btn-ghost" type="button">← Mapa</button>
-          <h1 className="text-lg font-semibold flex-1 text-center">HGUs Próximos</h1>
+          <h1 className="text-lg font-semibold flex-1 text-center">Dispositivos próximos</h1>
           <button
             onClick={handleShareAll}
             className="btn-ghost"
@@ -136,8 +136,8 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
         {items.length === 0 ? (
           <div className="text-center text-slate-400 py-12">
             {filter === FILTERS.AVAILABLE
-              ? 'Nenhum HGU disponível agora.'
-              : 'Nenhum HGU cadastrado ainda.'}
+              ? 'Nenhum dispositivo disponível agora.'
+              : 'Nenhum dispositivo cadastrado ainda.'}
           </div>
         ) : (
           items.map((hgu) => {

@@ -49,13 +49,13 @@ export function MapaScreen({ onNewHgu, onSelectHgu, onOpenList, userPosition, on
             <CreditLink size="large" />
           </div>
           <span className="text-slate-400 text-sm shrink-0">
-            {hgus.length} HGU{hgus.length !== 1 ? 's' : ''}
+            {hgus.length} disp.
           </span>
           <button
             type="button"
             onClick={onOpenList}
             className="ml-1 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-100 text-sm font-semibold transition shrink-0"
-            aria-label="Ver lista de HGUs"
+            aria-label="Ver lista"
             title="Lista"
           >
             ☰ Lista
@@ -73,7 +73,7 @@ export function MapaScreen({ onNewHgu, onSelectHgu, onOpenList, userPosition, on
           focusRequest={focusRequest}
         />
 
-        {/* Badge: HGUs sem GPS cadastrado */}
+        {/* Badge: dispositivos sem GPS cadastrado */}
         {withoutGps > 0 && (
           <div className="absolute top-3 left-3 z-[400] bg-slate-900/90 backdrop-blur border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-300 shadow-lg">
             + {withoutGps} sem GPS
@@ -111,15 +111,15 @@ export function MapaScreen({ onNewHgu, onSelectHgu, onOpenList, userPosition, on
           type="button"
           onClick={onNewHgu}
           className="absolute bottom-6 right-6 z-[400] bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-full w-16 h-16 shadow-xl flex items-center justify-center text-3xl font-bold transition"
-          aria-label="Cadastrar novo HGU"
+          aria-label="Cadastrar novo"
         >
           +
         </button>
 
-        {/* Estado vazio — nenhum HGU cadastrado */}
+        {/* Estado vazio — nenhum dispositivo cadastrado */}
         {hgus.length === 0 && (
           <div className="absolute inset-x-4 bottom-28 z-[400] bg-slate-900/95 backdrop-blur border border-slate-700 rounded-xl px-4 py-3 text-center text-slate-300 text-sm shadow-lg">
-            Nenhum HGU cadastrado ainda. Toque no <strong className="text-emerald-400">+</strong> para começar.
+            Nenhum dispositivo cadastrado ainda. Toque no <strong className="text-emerald-400">+</strong> para começar.
           </div>
         )}
       </div>

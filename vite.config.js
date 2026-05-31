@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// HGU Manager — PWA local-first, sem backend
+// Well HGU — PWA local-first, sem backend
 export default defineConfig({
   plugins: [
     react(),
@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'Well HGU',
         short_name: 'Well HGU',
-        description: 'Catálogo de HGUs e gerenciador de disponibilidade do Magic Tool',
+        description: 'Catálogo de dispositivos e gerenciador de disponibilidade',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',

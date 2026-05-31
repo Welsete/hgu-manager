@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { listCategories, addCategory } from '../utils/storage.js'
 
 /**
- * Seletor do tipo de HGU (HGU 5, HGU 6, HGU com telefone, etc.).
+ * Seletor do tipo de dispositivo (dispositivo 5, dispositivo 6, dispositivo com telefone, etc.).
  * As categorias ficam salvas no localStorage e o usuário pode adicionar novas na hora.
  */
 export function TypeSelector({ value, onChange }) {
@@ -13,7 +13,7 @@ export function TypeSelector({ value, onChange }) {
   }, [])
 
   function handleAdd() {
-    const name = window.prompt('Nome do novo tipo de HGU (ex: HGU 6, HGU com telefone):')
+    const name = window.prompt('Nome do novo tipo (ex: dispositivo 6, dispositivo com telefone):')
     if (!name || !name.trim()) return
     const updated = addCategory(name)
     setCategories(updated)
@@ -26,7 +26,7 @@ export function TypeSelector({ value, onChange }) {
 
   return (
     <div>
-      <label className="label-base">Tipo de HGU</label>
+      <label className="label-base">Tipo</label>
       <select
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
