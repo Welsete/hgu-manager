@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { MapView } from '../components/MapView.jsx'
 import { useGeolocation } from '../hooks/useGeolocation.js'
 import { listHgus } from '../utils/storage.js'
+import { CreditLink } from '../components/CreditLink.jsx'
 
 export function MapaScreen({ onNewHgu, onSelectHgu, onOpenList, userPosition, onUserPositionChange, focusRequest }) {
   const [hgus, setHgus] = useState([])
@@ -38,24 +39,29 @@ export function MapaScreen({ onNewHgu, onSelectHgu, onOpenList, userPosition, on
 
   return (
     <div className="h-[100dvh] w-screen flex flex-col bg-slate-950">
-      <header className="bg-slate-900 border-b border-slate-800 shrink-0">
-        <div className="px-4 py-3 flex items-center gap-2">
-          <h1 className="text-lg font-bold flex-1">
-            <span className="text-emerald-400">●</span> HGU Manager
-          </h1>
-          <span className="text-slate-400 text-sm">
+      <header className="bg-slate-900/95 backdrop-blur border-b border-slate-800 shrink-0">
+        <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold flex items-center gap-2">
+              <span className="brand-dot"></span>
+              <span className="brand-text">Well HGU</span>
+            </h1>
+            <CreditLink size="large" />
+          </div>
+          <span className="text-slate-400 text-sm shrink-0">
             {hgus.length} HGU{hgus.length !== 1 ? 's' : ''}
           </span>
           <button
             type="button"
             onClick={onOpenList}
-            className="ml-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-100 text-sm font-semibold transition"
+            className="ml-1 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-100 text-sm font-semibold transition shrink-0"
             aria-label="Ver lista de HGUs"
             title="Lista"
           >
             ☰ Lista
           </button>
         </div>
+        <div className="px-4 pb-2"></div>
       </header>
 
       <div className="flex-1 relative">

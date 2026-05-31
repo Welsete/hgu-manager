@@ -3,6 +3,7 @@ import { listHgus } from '../utils/storage.js'
 import { getAvailability, statusColor, statusLabel } from '../utils/availability.js'
 import { haversine, formatDistance } from '../utils/distance.js'
 import { shareHgus } from '../utils/share.js'
+import { CreditLink } from '../components/CreditLink.jsx'
 
 const FILTERS = {
   ALL: 'all',
@@ -145,6 +146,10 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
             )
           })
         )}
+
+        <div className="pt-6 text-center">
+          <CreditLink size="small" />
+        </div>
       </main>
     </div>
   )

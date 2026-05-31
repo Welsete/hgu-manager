@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png'],
       manifest: {
-        name: 'HGU Manager',
-        short_name: 'HGU Manager',
+        name: 'Well HGU',
+        short_name: 'Well HGU',
         description: 'Catálogo de HGUs e gerenciador de disponibilidade do Magic Tool',
         theme_color: '#0f172a',
         background_color: '#0f172a',

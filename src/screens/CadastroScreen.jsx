@@ -5,6 +5,7 @@ import { GpsField } from '../components/GpsField.jsx'
 import { AddressField } from '../components/AddressField.jsx'
 import { TypeSelector } from '../components/TypeSelector.jsx'
 import { createHgu, updateHgu } from '../utils/storage.js'
+import { CreditLink } from '../components/CreditLink.jsx'
 
 const EMPTY_FORM = {
   ssid: '',
@@ -197,6 +198,10 @@ export function CadastroScreen({ onBack, onSaved, editingHgu, userPosition }) {
         <p className="text-center text-slate-500 text-xs">
           Os dados são salvos localmente neste celular.
         </p>
+
+        <div className="pt-4 text-center">
+          <CreditLink size="small" />
+        </div>
       </form>
     </div>
   )

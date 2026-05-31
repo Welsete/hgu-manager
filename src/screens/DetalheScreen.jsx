@@ -3,6 +3,7 @@ import { deleteHgu, registerMagicToolUse, updateHgu } from '../utils/storage.js'
 import { getAvailability, statusColor, statusLabel } from '../utils/availability.js'
 import { NavigateButton } from '../components/NavigateButton.jsx'
 import { shareHgus } from '../utils/share.js'
+import { CreditLink } from '../components/CreditLink.jsx'
 
 export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, onEdit }) {
   // Estado local pra atualizar a UI na hora ao registrar/limpar uso
@@ -329,6 +330,10 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
           >
             Apagar HGU
           </button>
+        </div>
+
+        <div className="pt-4 text-center">
+          <CreditLink size="small" />
         </div>
       </main>
     </div>

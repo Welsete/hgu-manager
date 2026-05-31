@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { importHgus } from '../utils/storage.js'
+import { CreditLink } from '../components/CreditLink.jsx'
 
 /**
  * Tela mostrada quando o app abre com HGUs recebidos via link (#import=...).
@@ -69,6 +70,9 @@ export function ImportScreen({ incoming, onDone }) {
             </div>
           </>
         )}
+              <div className="pt-6 text-center">
+          <CreditLink size="small" />
+        </div>
       </main>
     </div>
   )
