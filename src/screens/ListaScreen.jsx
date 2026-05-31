@@ -13,6 +13,7 @@ const FILTERS = {
 export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
   const [hgus, setHgus] = useState([])
   const [filter, setFilter] = useState(FILTERS.ALL)
+  const [typeFilter, setTypeFilter] = useState('')
   const [shareMsg, setShareMsg] = useState(null)
 
   useEffect(() => {
@@ -31,16 +32,26 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
     })
   }, [hgus, userPosition])
 
+  // Tipos presentes nos HGUs cadastrados (pra montar o dropdown)
+  const availableTypes = useMemo(() => {
+    const set = new Set()
+    hgus.forEach((h) => { if (h.type) set.add(h.type) })
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  }, [hgus])
+
   const availableCount = useMemo(
     () => enriched.filter((h) => h._availability.status === 'available').length,
     [enriched]
   )
 
   const items = useMemo(() => {
-    const filtered =
+    let filtered =
       filter === FILTERS.AVAILABLE
         ? enriched.filter((h) => h._availability.status === 'available')
         : enriched
+    if (typeFilter) {
+      filtered = filtered.filter((h) => h.type === typeFilter)
+    }
 
     // Ordena: com distância primeiro (mais próximo), sem distância no fim
     return [...filtered].sort((a, b) => {
@@ -51,7 +62,7 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
       if (b._distance == null) return -1
       return a._distance - b._distance
     })
-  }, [enriched, filter])
+  }, [enriched, filter, typeFilter])
 
   async function handleShareAll() {
     if (hgus.length === 0) return
@@ -81,7 +92,7 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
             {'📤'}
           </button>
         </div>
-        <div className="max-w-xl mx-auto px-4 pb-3 grid grid-cols-2 gap-2">
+        <div className="max-w-xl mx-auto px-4 pb-2 grid grid-cols-2 gap-2">
           <FilterButton
             active={filter === FILTERS.ALL}
             onClick={() => setFilter(FILTERS.ALL)}
@@ -93,6 +104,21 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
             label={`Só disponíveis (${availableCount})`}
           />
         </div>
+        {availableTypes.length > 0 && (
+          <div className="max-w-xl mx-auto px-4 pb-3 flex items-center gap-2">
+            <label className="text-slate-400 text-xs shrink-0">Tipo:</label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="input-base text-sm py-2 flex-1"
+            >
+              <option value="">Todos os tipos</option>
+              {availableTypes.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </header>
 
       <main className="max-w-xl mx-auto px-4 py-4 space-y-2 pb-20">
