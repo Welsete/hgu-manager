@@ -9,6 +9,8 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
   const [hgu, setHgu] = useState(hguProp)
   const [showPasswords, setShowPasswords] = useState(false)
   const [flash, setFlash] = useState(null) // mensagem de feedback temporária
+  const [editingDate, setEditingDate] = useState(false)
+  const [dateInput, setDateInput] = useState('')
 
   if (!hgu) {
     return (
@@ -77,6 +79,40 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
     document.body.removeChild(a)
   }
 
+  function toDateTimeLocalValue(iso) {
+    const d = iso ? new Date(iso) : new Date()
+    if (Number.isNaN(d.getTime())) return ''
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  }
+
+  function openEditDate() {
+    setDateInput(toDateTimeLocalValue(hgu.lastMagicToolUse))
+    setEditingDate(true)
+  }
+
+  function saveEditDate() {
+    if (!dateInput) {
+      setEditingDate(false)
+      return
+    }
+    const d = new Date(dateInput)
+    if (Number.isNaN(d.getTime())) {
+      showFlash('Data inválida.')
+      return
+    }
+    if (d.getTime() > Date.now()) {
+      const ok = window.confirm('A data escolhida está no futuro. Quer salvar mesmo assim?')
+      if (!ok) return
+    }
+    const updated = updateHgu(hgu.id, { lastMagicToolUse: d.toISOString() })
+    if (updated) {
+      setHgu(updated)
+      setEditingDate(false)
+      showFlash('Data do último uso atualizada.')
+    }
+  }
+
   async function handleShare() {
     const r = await shareHgus([hgu], `HGU ${hgu.ssid}`)
     if (r.method === 'clipboard') showFlash('Link copiado! Cole no WhatsApp para enviar.')
@@ -143,6 +179,41 @@ export function DetalheScreen({ hgu: hguProp, onBack, onDeleted, onShowOnMap, on
             </div>
           )}
         </div>
+
+        {/* Editar data do último uso */}
+        {editingDate ? (
+          <div className="rounded-lg bg-slate-900 border border-slate-700 p-3 space-y-2">
+            <div className="text-slate-400 text-xs uppercase tracking-wide">
+              Data e hora do último uso
+            </div>
+            <input
+              type="datetime-local"
+              value={dateInput}
+              onChange={(e) => setDateInput(e.target.value)}
+              className="input-base"
+            />
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button type="button" onClick={saveEditDate} className="btn-primary text-sm">
+                Salvar data
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingDate(false)}
+                className="btn-secondary text-sm"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={openEditDate}
+            className="btn-secondary text-sm"
+          >
+            {'📅'} Editar data do último uso
+          </button>
+        )}
 
         {/* Mensagem de feedback */}
         {flash && (

@@ -51,9 +51,44 @@ export async function forwardGeocode(query, signal) {
 }
 
 /**
+ * Busca endereços (autocomplete). Retorna lista compacta de sugestões.
+ * @returns {Promise<Array<{ lat: number, lng: number, displayName: string, shortName: string }>>}
+ */
+export async function searchAddresses(query, signal) {
+  if (!query || query.trim().length < 5) return []
+  const url =
+    `${NOMINATIM_SEARCH}?format=json&q=${encodeURIComponent(query.trim())}` +
+    `&limit=5&accept-language=pt-BR&countrycodes=br&addressdetails=1`
+  try {
+    const res = await fetch(url, { headers: { Accept: 'application/json' }, signal })
+    if (!res.ok) return []
+    const data = await res.json()
+    if (!Array.isArray(data)) return []
+    return data
+      .map((item) => {
+        const lat = parseFloat(item.lat)
+        const lng = parseFloat(item.lon)
+        if (Number.isNaN(lat) || Number.isNaN(lng)) return null
+        const compact = formatAddress(item)
+        return {
+          lat,
+          lng,
+          displayName: item.display_name || '',
+          shortName: compact || item.display_name || ''
+        }
+      })
+      .filter(Boolean)
+  } catch (err) {
+    if (err.name === 'AbortError') return []
+    console.warn('searchAddresses falhou:', err)
+    return []
+  }
+}
+
+/**
  * Monta um endereço compacto: "Rua, número, bairro, cidade - UF".
  */
-function formatAddress(data) {
+export function formatAddress(data) {
   const a = data.address || {}
   const street = a.road || a.pedestrian || a.path || ''
   const number = a.house_number || ''
