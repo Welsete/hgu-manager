@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { listHgus } from '../utils/storage.js'
 import { getAvailability, statusColor, statusLabel } from '../utils/availability.js'
 import { haversine, formatDistance } from '../utils/distance.js'
 import { shareHgus } from '../utils/share.js'
+import { downloadBackup, readBackupFile, restoreBackup } from '../utils/backup.js'
+import { isAutoBackupEnabled, enableAutoBackup, disableAutoBackup, syncNow, getLastSync, isFSASupported } from '../utils/autoBackup.js'
 import { CreditLink } from '../components/CreditLink.jsx'
 
 const FILTERS = {
@@ -15,10 +17,81 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
   const [filter, setFilter] = useState(FILTERS.ALL)
   const [typeFilter, setTypeFilter] = useState('')
   const [shareMsg, setShareMsg] = useState(null)
+  const fileInputRef = useRef(null)
+  const [autoOn, setAutoOn] = useState(false)
+  const [autoStatus, setAutoStatus] = useState({ lastSync: null })
 
   useEffect(() => {
     setHgus(listHgus())
   }, [])
+
+  useEffect(() => {
+    let alive = true
+    isAutoBackupEnabled().then((on) => {
+      if (!alive) return
+      setAutoOn(on)
+      setAutoStatus({ lastSync: getLastSync() })
+    })
+    // Atualiza a contagem de último sync periodicamente
+    function refresh() { setAutoStatus({ lastSync: getLastSync() }) }
+    window.addEventListener('hgu-storage-change', refresh)
+    const t = setInterval(refresh, 5000)
+    return () => {
+      alive = false
+      window.removeEventListener('hgu-storage-change', refresh)
+      clearInterval(t)
+    }
+  }, [])
+
+  async function handleEnableAuto() {
+    try {
+      const r = await enableAutoBackup()
+      if (r?.ok) {
+        setAutoOn(true)
+        setAutoStatus({ lastSync: r.ts })
+        setShareMsg('Backup automático ativado.')
+        setTimeout(() => setShareMsg(null), 3000)
+      } else {
+        setShareMsg('Não consegui ativar — permissão negada.')
+        setTimeout(() => setShareMsg(null), 3000)
+      }
+    } catch (err) {
+      if (err?.name === 'AbortError') return // usuário cancelou
+      setShareMsg(err.message || 'Erro ao ativar backup automático.')
+      setTimeout(() => setShareMsg(null), 4000)
+    }
+  }
+
+  async function handleDisableAuto() {
+    if (!window.confirm('Desativar backup automático? O arquivo continua intacto, só para de atualizar.')) return
+    await disableAutoBackup()
+    setAutoOn(false)
+    setAutoStatus({ lastSync: null })
+    setShareMsg('Backup automático desativado.')
+    setTimeout(() => setShareMsg(null), 3000)
+  }
+
+  async function handleManualSync() {
+    const r = await syncNow()
+    if (r.ok) {
+      setAutoStatus({ lastSync: r.ts })
+      setShareMsg('Backup sincronizado agora.')
+    } else if (r.reason === 'permission') {
+      setShareMsg('Permissão negada. Toque em ativar novamente.')
+    } else {
+      setShareMsg('Não consegui sincronizar.')
+    }
+    setTimeout(() => setShareMsg(null), 3000)
+  }
+
+  function formatAgo(ts) {
+    if (!ts) return 'nunca'
+    const s = Math.floor((Date.now() - ts) / 1000)
+    if (s < 60) return 'agora há pouco'
+    if (s < 3600) return `há ${Math.floor(s / 60)} min`
+    if (s < 86400) return `há ${Math.floor(s / 3600)} h`
+    return `há ${Math.floor(s / 86400)} dia${Math.floor(s / 86400) !== 1 ? 's' : ''}`
+  }
 
   // Lista enriquecida com status e distância
   const enriched = useMemo(() => {
@@ -74,6 +147,40 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
       setShareMsg('Não consegui compartilhar neste navegador.')
       setTimeout(() => setShareMsg(null), 3000)
     }
+  }
+
+  function handleExport() {
+    if (hgus.length === 0) {
+      setShareMsg('Nada para exportar — sem dispositivos cadastrados.')
+      setTimeout(() => setShareMsg(null), 3000)
+      return
+    }
+    const r = downloadBackup()
+    setShareMsg(`Backup de ${r.count} dispositivo${r.count !== 1 ? 's' : ''} baixado. Guarde o arquivo em local seguro.`)
+    setTimeout(() => setShareMsg(null), 5000)
+  }
+
+  async function handleImportFile(e) {
+    const file = e.target.files?.[0]
+    if (e.target) e.target.value = ''
+    if (!file) return
+    const data = await readBackupFile(file)
+    if (!data) {
+      setShareMsg('Arquivo inválido. Selecione um backup .json gerado por este app.')
+      setTimeout(() => setShareMsg(null), 4000)
+      return
+    }
+    const ok = window.confirm(
+      `Restaurar ${data.hgus.length} dispositivo(s) deste backup?\n\nDuplicados (mesmo SSID + Código) serão pulados.`
+    )
+    if (!ok) return
+    const r = restoreBackup(data)
+    setHgus(listHgus())
+    const parts = [`${r.added} restaurado(s)`]
+    if (r.skipped > 0) parts.push(`${r.skipped} duplicado(s) pulado(s)`)
+    if (r.categoriesAdded > 0) parts.push(`${r.categoriesAdded} tipo(s) novo(s)`)
+    setShareMsg(parts.join(' · '))
+    setTimeout(() => setShareMsg(null), 5000)
   }
 
   return (
@@ -173,7 +280,65 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
           })
         )}
 
-        <div className="pt-6 text-center">
+        {isFSASupported() && (
+          <div className="pt-6 space-y-2 border-t border-slate-800/60 mt-4">
+            <p className="text-slate-400 text-xs text-center pt-2">Backup automático</p>
+            {autoOn ? (
+              <>
+                <div className="text-center text-emerald-400 text-sm">
+                  ✓ Ativo · sincronizado {formatAgo(autoStatus.lastSync)}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={handleManualSync} className="btn-secondary text-sm">
+                    Sincronizar agora
+                  </button>
+                  <button type="button" onClick={handleDisableAuto} className="btn-secondary text-sm">
+                    Desativar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={handleEnableAuto} className="btn-primary text-sm">
+                  Ativar backup automático
+                </button>
+                <p className="text-slate-500 text-xs text-center">
+                  Você escolhe o arquivo uma vez; o app atualiza ele sozinho a cada mudança.
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="pt-6 space-y-2 border-t border-slate-800/60 mt-4">
+          <p className="text-slate-400 text-xs text-center pt-2">Backup manual (arquivo .json)</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={hgus.length === 0}
+              className="btn-secondary text-sm"
+            >
+              {'💾'} Exportar
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="btn-secondary text-sm"
+            >
+              {'📂'} Importar
+            </button>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={handleImportFile}
+            className="hidden"
+          />
+        </div>
+
+        <div className="pt-4 text-center">
           <CreditLink size="small" />
         </div>
       </main>

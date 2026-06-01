@@ -1,28 +1,11 @@
-// Camada de persistência local para dispositivos.
+// Camada de persistência local.
 // Mantém todos os dispositivos em uma única chave do localStorage como JSON.
-// Nas próximas iterações pode migrar para IndexedDB ou Firestore sem mudar a API.
 
 const STORAGE_KEY = 'hgu-manager:hgus:v1'
 const CATEGORIES_KEY = 'hgu-manager:categories:v1'
 
-// Tipos de dispositivo conhecidos (seed). O usuário pode adicionar mais.
-const DEFAULT_CATEGORIES = ['dispositivo 5', 'dispositivo 5 HPNA', 'dispositivo 6', 'dispositivo com telefone']
-
-/**
- * @typedef {Object} dispositivo
- * @property {string} id            - UUID gerado no cadastro
- * @property {string} ssid          - Nome da rede WiFi
- * @property {string} type          - Tipo/categoria do dispositivo (ex: "dispositivo 6")
- * @property {string} wifiPassword  - Senha da rede WiFi
- * @property {string} modemPassword - Senha do painel admin do modem
- * @property {string} slid          - Serial do equipamento
- * @property {string} [address]     - Endereço (texto)
- * @property {string} [photo]       - Foto opcional em data URL (base64)
- * @property {string} [note]        - Anotação livre opcional
- * @property {{ lat: number, lng: number, accuracy?: number } | null} location
- * @property {string} createdAt     - ISO timestamp do cadastro
- * @property {string | null} lastMagicToolUse - ISO timestamp do último uso
- */
+// Tipos conhecidos (seed). O usuário pode adicionar mais.
+const DEFAULT_CATEGORIES = ['dispositivo 5', 'dispositivo 5 HPNA', 'dispositivo 6', 'dispositivo com voz']
 
 function readAll() {
   try {
@@ -39,9 +22,9 @@ function readAll() {
 function writeAll(list) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+    try { window.dispatchEvent(new CustomEvent('hgu-storage-change')) } catch {}
     return true
   } catch (err) {
-    // Quota excedida geralmente acontece com fotos grandes em base64
     console.error('Falha ao salvar dispositivos no localStorage:', err)
     return false
   }
@@ -51,7 +34,7 @@ function generateId() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID()
   }
-  return 'hgu_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9)
+  return 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9)
 }
 
 export function listHgus() {
@@ -62,10 +45,6 @@ export function getHgu(id) {
   return readAll().find((h) => h.id === id) || null
 }
 
-/**
- * Cria um novo dispositivo. Retorna o objeto criado ou lança erro de validação.
- * @param {Partial<dispositivo>} input
- */
 export function createHgu(input) {
   const errors = validateHguInput(input)
   if (errors.length > 0) {
@@ -115,9 +94,8 @@ export function countHgus() {
 }
 
 /**
- * Importa Dispositivos recebidos (de um link compartilhado). Gera novos ids e pula
- * duplicados (mesmo SSID + SLID). Fotos não vêm no compartilhamento.
- * @returns {{ added: number, skipped: number }}
+ * Importa dispositivos recebidos de um link compartilhado.
+ * Gera novos ids, pula duplicados (SSID+SLID), e NÃO carrega fotos.
  */
 export function importHgus(incoming) {
   if (!Array.isArray(incoming)) return { added: 0, skipped: 0 }
@@ -126,9 +104,7 @@ export function importHgus(incoming) {
   let skipped = 0
   for (const item of incoming) {
     if (!item?.ssid || !item?.slid) { skipped++; continue }
-    const dup = list.some(
-      (h) => h.slid === item.slid && h.ssid === item.ssid
-    )
+    const dup = list.some((h) => h.slid === item.slid && h.ssid === item.ssid)
     if (dup) { skipped++; continue }
     list.push({
       id: generateId(),
@@ -151,36 +127,55 @@ export function importHgus(incoming) {
 }
 
 /**
- * Marca uso da Validação agora.
+ * Restaura dispositivos a partir de um backup completo (.json).
+ * Preserva foto, createdAt e lastMagicToolUse. Pula duplicados por SSID+SLID.
  */
+export function restoreHgus(incoming) {
+  if (!Array.isArray(incoming)) return { added: 0, skipped: 0 }
+  const list = readAll()
+  let added = 0
+  let skipped = 0
+  for (const item of incoming) {
+    if (!item?.ssid || !item?.slid) { skipped++; continue }
+    const dup = list.some((h) => h.slid === item.slid && h.ssid === item.ssid)
+    if (dup) { skipped++; continue }
+    list.push({
+      id: generateId(),
+      ssid: String(item.ssid).trim(),
+      type: item.type?.trim() || '',
+      wifiPassword: item.wifiPassword || '',
+      modemPassword: item.modemPassword || '',
+      slid: String(item.slid).trim(),
+      address: item.address?.trim() || '',
+      photo: item.photo || null,
+      note: item.note?.trim() || '',
+      location: item.location || null,
+      createdAt: item.createdAt || new Date().toISOString(),
+      lastMagicToolUse: item.lastMagicToolUse || null
+    })
+    added++
+  }
+  writeAll(list)
+  return { added, skipped }
+}
+
 export function registerMagicToolUse(id) {
   return updateHgu(id, { lastMagicToolUse: new Date().toISOString() })
 }
 
-/**
- * Validação simples — campos obrigatórios.
- * @param {Partial<dispositivo>} input
- * @returns {string[]} lista de campos com erro
- */
 export function validateHguInput(input) {
   const errors = []
   if (!input?.ssid?.trim()) errors.push('SSID')
   if (!input?.wifiPassword?.trim()) errors.push('Senha de rede')
   if (!input?.modemPassword?.trim()) errors.push('Senha admin')
-  if (!input?.slid?.trim()) errors.push('SLID')
+  if (!input?.slid?.trim()) errors.push('Código')
   return errors
 }
 
-// ---------------------------------------------------------------------------
-// Categorias / tipos de dispositivo (editáveis pelo usuário)
-// ---------------------------------------------------------------------------
+// ----- Categorias / tipos -----
 
 function writeCategories(list) {
-  try {
-    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(list))
-  } catch (err) {
-    console.error('Falha ao salvar categorias:', err)
-  }
+  try { localStorage.setItem(CATEGORIES_KEY, JSON.stringify(list)) } catch {}
 }
 
 export function listCategories() {
@@ -197,9 +192,6 @@ export function listCategories() {
   }
 }
 
-/**
- * Adiciona uma categoria (se não existir, ignorando maiúsc/minúsc) e devolve a lista atualizada.
- */
 export function addCategory(name) {
   const clean = (name || '').trim()
   if (!clean) return listCategories()

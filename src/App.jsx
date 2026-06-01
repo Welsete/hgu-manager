@@ -8,6 +8,7 @@ import { TermsModal } from './components/TermsModal.jsx'
 import { getHgu } from './utils/storage.js'
 import { readImportFromUrl, clearImportFromUrl } from './utils/share.js'
 import { isTermsAccepted } from './utils/terms.js'
+import { initAutoBackupListener } from './utils/autoBackup.js'
 
 const SCREENS = {
   MAPA: 'mapa',
@@ -29,6 +30,11 @@ export default function App() {
   const [termsMode, setTermsMode] = useState(() => (isTermsAccepted() ? 'hidden' : 'initial'))
 
   const selectedHgu = selectedHguId ? getHgu(selectedHguId) : null
+
+  // Liga o auto-backup (se configurado)
+  useEffect(() => {
+    initAutoBackupListener()
+  }, [])
 
   // Empilha history pra import-ativo
   useEffect(() => {
