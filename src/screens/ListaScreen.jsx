@@ -259,7 +259,22 @@ export function ListaScreen({ userPosition, onBack, onSelectHgu }) {
                 <div className="flex items-center gap-3">
                   <span className="text-2xl shrink-0 leading-none" style={{ color }}>●</span>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold truncate">{hgu.ssid}</div>
+                    <div className="font-semibold truncate flex items-center gap-1.5">
+                      {hgu._availability.status !== 'available' && (
+                        <span
+                          className="text-[11px] px-1.5 py-0.5 rounded font-bold shrink-0"
+                          style={{
+                            backgroundColor: color + '33',
+                            color,
+                            border: `1px solid ${color}66`
+                          }}
+                          title="Dias para liberar"
+                        >
+                          {Math.ceil(hgu._availability.daysUntilAvailable)}d
+                        </span>
+                      )}
+                      <span className="truncate">{hgu.ssid}</span>
+                    </div>
                     <div className="text-xs text-slate-400 truncate">
                       {hgu.type ? `${hgu.type} · ` : ''}
                       {statusLabel(hgu._availability.status)}
